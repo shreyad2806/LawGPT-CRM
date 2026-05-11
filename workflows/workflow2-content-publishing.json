@@ -1,0 +1,178 @@
+{
+  "name": "CONTENT PUBLISHING ENGINE",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        32
+      ],
+      "id": "63ba422d-f616-4b57-b673-b1e1c95d2613",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://yourproject_.supabase.co/rest/v1/content_queue",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "approved",
+              "value": "eq.true"
+            },
+            {
+              "name": "posted",
+              "value": "eq.false"
+            },
+            {
+              "name": "limit",
+              "value": "5"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "REPLACE_WITH_SUPABASE_API_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_SUPABASE_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -96,
+        32
+      ],
+      "id": "704b07fe-d96a-4899-a6e2-1dbcae224461",
+      "name": "FETCH CONTENT"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5a8b365c-6261-4189-90b2-07b3f3742af5",
+              "name": "published_message",
+              "value": "Successfully posted to LinkedIn",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        32
+      ],
+      "id": "1b234126-5f9a-418f-82e0-8ccc195ca748",
+      "name": "FAKE LINKEDIN PUBLISHER"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{\"https://YOUR_PROJECT.supabase.co/rest/v1/content_queue?id=eq.\" + $json.id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_ _KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SUPABASE_ _KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"posted\": true,\n  \"status\": \"posted\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        320,
+        32
+      ],
+      "id": "47ac6bbd-f8b1-4d0b-89ce-59aa07d5dde2",
+      "name": "MARK CONTENT AS POSTED"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "FETCH CONTENT",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FETCH CONTENT": {
+      "main": [
+        [
+          {
+            "node": "FAKE LINKEDIN PUBLISHER",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAKE LINKEDIN PUBLISHER": {
+      "main": [
+        [
+          {
+            "node": "MARK CONTENT AS POSTED",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c71dcb44-70dd-466c-8b03-189bc27a575b",
+  "meta": {
+    "instanceId": "e5295ea684ae8030928f4d50a044aec949d076057884ec95962886eb6e0c65e9"
+  },
+  "id": "3ItT0XmT0gX3J5Mb",
+  "tags": []
+}

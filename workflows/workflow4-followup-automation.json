@@ -1,0 +1,168 @@
+{
+  "name": "Follow-Up Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -96,
+        -16
+      ],
+      "id": "77743eb6-a8e2-4a91-be35-533c88ed1607",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "hours"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        -16
+      ],
+      "id": "4a894366-d13f-479a-baff-f21b53be87b8",
+      "name": "Wait",
+      "webhookId": "8c6aefc9-9e69-44b4-b067-c83440edabb6"
+    },
+    {
+      "parameters": {
+        "subject": "High Intent Lead Completed Follow-Up",
+        "emailType": "text",
+        "message": "=Lead {{$json.name}} has completed the automated follow-up sequence.  Lead Details:  Name: {{$json.name}} Email: {{$json.email}} Company: {{$json.company}}  Please review and consider manual outreach.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        528,
+        -16
+      ],
+      "id": "3ea6db98-895e-4ec4-a0b1-9bb942cc30c0",
+      "name": "Notify Founder",
+      "webhookId": "bb4d53bf-ccee-4550-875a-4151222e4bea"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.email}}",
+        "subject": "Thanks for your interest in LawGPT",
+        "message": "=Hi {{$json.name}},  Thanks for reaching out and showing interest in LawGPT.  We’re building AI-powered automation tools for legal teams to automate lead management, outreach, and client engagement.  We’d love to learn more about your workflow and how your team currently handles lead generation and follow-ups.  We’ll follow up shortly with more information.\nTeam LawGPT",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        320,
+        -16
+      ],
+      "id": "29eabc7b-e461-42cd-9878-4507050c0130",
+      "name": "Send mail",
+      "webhookId": "cbfc71f8-67d7-4a9c-afb3-3245261be54e"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{\"https://YOUR_PROJECT.supabase.co/rest/v1/leads?id=eq.\" + $json.id}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "REPLACE_WITH_SUPABASE_API_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_SUPABASE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "Prefer"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"status\": \"contacted\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        736,
+        -16
+      ],
+      "id": "a5b36b41-3e8d-4190-b6c1-fc3b5a177348",
+      "name": "UPDATE LEAD STATUS"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send mail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send mail": {
+      "main": [
+        [
+          {
+            "node": "Notify Founder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Founder": {
+      "main": [
+        [
+          {
+            "node": "UPDATE LEAD STATUS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "84178221-2077-4998-be57-1cb093beee4e",
+  "meta": {
+    "instanceId": "e5295ea684ae8030928f4d50a044aec949d076057884ec95962886eb6e0c65e9"
+  },
+  "id": "rym1QIwQN3LEZW69",
+  "tags": []
+}

@@ -1,0 +1,450 @@
+{
+  "name": "LawGPT Trend Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "17507a1c-a6ce-4c51-8c1d-a84e92fb6dd2",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "77fc59ac-12f0-401b-9523-9b22b70a5594",
+      "name": "Fetch RSS Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "68afd21d-4057-4cab-8dab-52fe05fe59c3",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "628fe1e7-da6f-47d9-a751-63098e975413",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0203cd8a-9bd1-439f-a0b5-67bb915e6147",
+              "name": "Title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "32446b16-155b-4024-a387-7a74377e638d",
+              "name": "summary",
+              "value": "={{ $json.contentSnippet }}",
+              "type": "string"
+            },
+            {
+              "id": "758c09ae-8558-42cf-a448-23c4495d96fd",
+              "name": "url",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "9d79d7c1-3667-436b-9450-d1bb1c16fcfb",
+      "name": "Extract Article Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Authorization\": \"Bearer REPLACE_WITH_API_KEY\"\n}",
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{\n{\n  \"model\": \"gpt-4.1-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an AI legal-tech trend analyst.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": `Analyze this startup/legal/AI topic.\n\nTitle:\n${$json.Title}\n\nSummary:\n${$json.summary}\n\nReturn ONLY valid JSON.\n\nFormat:\n{\n  \"relevance_score\": 0,\n  \"category\": \"\",\n  \"viral_reason\": \"\"\n}`\n    }\n  ],\n  \"temperature\": 0.7\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "eec26e6b-d529-494b-97e2-f31eded715f5",
+      "name": "AI Trend Analysis"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1825ff0b-f64d-44b3-a6f1-63dd43262a7f",
+              "name": "analysis",
+              "value": "={{ JSON.parse($json.choices[0].message.content) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "95afa279-b232-4b14-ad82-aa1748870f44",
+      "name": "Parse Trend Analysis"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Authorization\": \"Bearer REPLACE_WITH_API_KEY\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"model\": \"gpt-4.1-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a viral LinkedIn content strategist for legal-tech startups.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": `Create a LinkedIn post based on this trend analysis.\n\nCategory:\n${$json.analysis.category}\n\nViral Reason:\n${$json.analysis.viral_reason}\n\nRelevance Score:\n${$json.analysis.relevance_score}\n\nReturn ONLY valid JSON.\n\nFormat:\n{\n  \"hook\": \"\",\n  \"body\": \"\",\n  \"cta\": \"\",\n  \"hashtags\": \"\"\n}`\n    }\n  ],\n  \"temperature\": 0.8\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1456,
+        0
+      ],
+      "id": "0e97fac1-391c-4d33-be89-97ed0e5079a2",
+      "name": "Generate LinkedIn Post"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "864a179f-23e9-4b74-9f7a-71f807e14622",
+              "name": "content",
+              "value": "={{ JSON.parse($json.choices[0].message.content) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1664,
+        0
+      ],
+      "id": "55b0bb3d-ffd8-4598-931d-30f78d540bc5",
+      "name": "Parse LinkedIn Content"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR_PROJECT.supabase.co/rest/v1/trends",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_API_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR-_SUPABASE_ _KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{\n{\n  \"title\": $('Extract Article Data').first().json.Title,\n  \"source\": \"TechCrunch RSS\",\n  \"url\": $('Extract Article Data').first().json.url,\n  \"category\": $('Parse Trend Analysis').first().json.analysis.category,\n  \"trend_score\": $('Parse Trend Analysis').first().json.analysis.relevance_score\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1984,
+        0
+      ],
+      "id": "4ec3eca5-7030-41a7-a5e5-b937ea59284e",
+      "name": "Save Trend"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://YOUR_PROJECT.supabase.co/rest/v1/content_queue",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "REPLACE_WITH_SUPABASE_API_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer REPLACE_WITH_SUPABASE_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "trend_id",
+              "value": "={{$json.id}}"
+            },
+            {
+              "name": "generated_post",
+              "value": "={{ $json.content.body }}"
+            },
+            {
+              "name": "hook",
+              "value": "={{ $json.content.hook }}"
+            },
+            {
+              "name": "=cta",
+              "value": "={{ $json.content.cta }}"
+            },
+            {
+              "name": "status",
+              "value": "draft"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2512,
+        144
+      ],
+      "id": "f3315ebc-78f3-4868-b897-32253823488f",
+      "name": "Save Content Queue",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2240,
+        144
+      ],
+      "id": "ded28592-fc79-4eca-8906-8575db32d648",
+      "name": "Merge"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch RSS Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch RSS Feed": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Extract Article Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Article Data": {
+      "main": [
+        [
+          {
+            "node": "AI Trend Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Trend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse Trend Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Trend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Generate LinkedIn Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate LinkedIn Post": {
+      "main": [
+        [
+          {
+            "node": "Parse LinkedIn Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse LinkedIn Content": {
+      "main": [
+        [
+          {
+            "node": "Save Trend",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Save Trend": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Save Content Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "5aabbc99-4c1a-4790-9834-54cb8e309c49",
+  "meta": {
+    "instanceId": "e5295ea684ae8030928f4d50a044aec949d076057884ec95962886eb6e0c65e9"
+  },
+  "id": "WTScutMBl1SgwYNg",
+  "tags": []
+}

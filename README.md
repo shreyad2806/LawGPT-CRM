@@ -51,7 +51,7 @@ Internal CRM and marketing automation system built for LawGPT using n8n, Supabas
 
 # System Architecture
 
-![Uploading Gemini_Generated_Image_f9n54uf9n54uf9n5.png…]()
+![alt text](image.png)
 
 ---
 
@@ -90,3 +90,4 @@ AI-based lead qualification
 * frontend form code
 * database schema
 * screenshots
+

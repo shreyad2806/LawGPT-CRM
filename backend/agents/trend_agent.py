@@ -2,7 +2,9 @@ from tools.trend_tool import trigger_trend_workflow
 from typing import Dict, Any
 
 
-def trend_agent(state: Dict[str, Any]) -> Dict[str, Any]:
+from models.agent_state import AgentState
+
+def trend_agent(state: AgentState):
     """Run trend research tool and update the shared agent state."""
 
     result = trigger_trend_workflow()

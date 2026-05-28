@@ -1,39 +1,27 @@
-from typing import Callable
-from models.agent_state import AgentState
 import time
+from typing import Callable, Tuple, Any
 
 
-MAX_RETRIES = 3
+def retry_with_backoff(
+    func: Callable[[], Any],
+    retries: int = 3,
+    delay: int = 2
+) -> Tuple[Any, int]:
 
+    last_error = None
 
-def retry_agent(
-    agent_function: Callable,
-    state: AgentState
-) -> AgentState:
-
-    retries = 0
-
-    while retries < MAX_RETRIES:
+    for attempt in range(retries):
 
         try:
-            result = agent_function(state)
-
-            # success
-            return result
+            result = func()
+            return result, attempt
 
         except Exception as e:
 
-            retries += 1
+            last_error = e
 
-            print(f"Retry {retries} failed: {e}")
+            print(f"Retry {attempt + 1} failed: {e}")
 
-            time.sleep(2)
+            time.sleep(delay * (2 ** attempt))
 
-    # final failure
-    state["execution_status"] = "failed"
-
-    state["tool_results"]["error"] = (
-        f"Agent failed after {MAX_RETRIES} retries"
-    )
-
-    return state
+    raise Exception(f"All retries failed: {last_error}")

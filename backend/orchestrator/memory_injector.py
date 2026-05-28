@@ -10,7 +10,7 @@ def inject_memory(
     memory = fetch_recent_memory(agent_name)
 
     state["memory_context"] = {
-        "agent_memory": memory
+        "recent_memory": memory
     }
 
     return state

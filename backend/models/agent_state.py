@@ -1,10 +1,12 @@
-from typing import TypedDict, List, Dict, Any
+from typing import TypedDict, Dict, Any, List
 
 
-class AgentState(TypedDict):
+class AgentState(TypedDict, total=False):
 
     user_goal: str
+
     current_task: str
+
     completed_tasks: List[str]
 
     memory_context: Dict[str, Any]
@@ -14,3 +16,9 @@ class AgentState(TypedDict):
     next_action: str
 
     execution_status: str
+
+    error: str
+
+    trend_agent_retries: int
+
+    strategy_agent_retries: int

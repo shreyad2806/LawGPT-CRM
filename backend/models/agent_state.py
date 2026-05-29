@@ -16,6 +16,8 @@ class AgentState(TypedDict, total=False):
     next_action: str
 
     execution_status: str
+    
+    execution_timeline: list
 
     error: str
 
@@ -26,4 +28,6 @@ class AgentState(TypedDict, total=False):
     content_agent_retries: int
     strategy_agent_retries : int
     trend_agent_retries: int
+    analytics_agent_retries: int
+    
     

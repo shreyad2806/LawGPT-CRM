@@ -18,4 +18,26 @@ print("\nFINAL RESULT:\n")
 
 from pprint import pprint
 
-pprint(result)
+from utils.execution_formatter import (
+    print_summary
+)
+
+from utils.dashboard_response import (
+    build_dashboard_response
+)
+
+print_summary(result)
+
+dashboard_response = (
+    build_dashboard_response(
+        result
+    )
+)
+
+print(
+    "\nDASHBOARD RESPONSE:\n"
+)
+
+from pprint import pprint
+
+pprint(dashboard_response)

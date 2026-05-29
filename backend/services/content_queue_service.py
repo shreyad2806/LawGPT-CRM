@@ -2,15 +2,12 @@ from services.supabase_client import supabase
 
 
 def enqueue_generated_content(content_data):
-    # DEBUG: show payload received for queue insertion
-    print("QUEUE INSERT DEBUG:")
-    print(content_data)
-
+    # Validate required schema key
     try:
         generated_post = content_data["linkedin_post"]
     except KeyError as e:
-        print("ERROR: content_data missing required key:", e)
-        raise
+        # Raise a clear error but avoid printing raw payload to terminal
+        raise KeyError("content_data missing required key: 'linkedin_post'") from e
 
     response = (
         supabase
@@ -25,10 +22,5 @@ def enqueue_generated_content(content_data):
         .execute()
     )
 
-    # DEBUG: show insertion response
-    try:
-        print("QUEUE RESPONSE:", response.data)
-    except Exception:
-        print("QUEUE RESPONSE: no response data")
-
+    # Do not print raw DB responses; return response for callers to use if needed
     return response.data

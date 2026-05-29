@@ -10,9 +10,17 @@ from services.content_queue_service import (
 from services.memory_store import save_memory
 
 import time
-
+from datetime import datetime
 
 def content_agent(state):
+    
+    state.setdefault("execution_timeline", [])
+
+    state["execution_timeline"].append({
+        "agent": "content_agent",
+        "event": "started",
+        "timestamp": datetime.utcnow().isoformat()
+    })
 
     start_time = time.time()
 
@@ -62,11 +70,7 @@ def content_agent(state):
     )
 
     # SAVE TO CONTENT QUEUE
-    # DEBUG: show exact payload before enqueue
-    print("CONTENT DATA DEBUG:")
-    print(content_data)
-    print(list(content_data.keys()))
-
+    # Enqueue generated content (content_agent produces content_data)
     enqueue_generated_content(content_data)
 
     duration = time.time() - start_time
@@ -78,7 +82,7 @@ def content_agent(state):
         input_data=strategy_data,
         output_data=content_data
     )
-    print("WORKFLOW LOG RESPONSE:", getattr(workflow_resp, 'data', workflow_resp))
+    # workflow_resp contains DB response; we don't print raw DB responses.
 
     # LOG AGENT
     agent_resp = log_agent_execution(
@@ -89,10 +93,16 @@ def content_agent(state):
             "duration": duration
         }
     )
-    print("AGENT LOG RESPONSE:", getattr(agent_resp, 'data', agent_resp))
+    # agent_resp contains DB response; we don't print raw DB responses.
 
     state["completed_tasks"].append(
         "content_generation_complete"
     )
+    
+    state["execution_timeline"].append({
+        "agent": "content_agent",
+        "event": "completed",
+        "timestamp": datetime.utcnow().isoformat()
+    })
 
     return state

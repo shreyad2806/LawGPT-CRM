@@ -1,13 +1,12 @@
 from models.agent_state import AgentState
-
 from agents.trend_agent import trend_agent
 from agents.strategy_agent import strategy_agent
 from agents.content_agent import content_agent
-
 from orchestrator.router import route_task
 from orchestrator.supervisor import evaluate_execution
 from orchestrator.memory_injector import inject_memory
 from orchestrator.retry_handler import retry_with_backoff
+from agents.analytics_agent import analytics_agent
 
 
 def run_orchestrator(state: AgentState) -> AgentState:
@@ -66,6 +65,25 @@ def run_orchestrator(state: AgentState) -> AgentState:
     )
 
     state["content_agent_retries"] = retries
+    
+    # =========================
+    # ANALYTICS AGENT
+    # =========================
+
+    state = inject_memory(
+    state,
+    "analytics_agent"
+)
+
+    state, retries = retry_with_backoff(
+
+    lambda: analytics_agent(state)
+
+)
+
+    state["analytics_agent_retries"] = (
+    retries
+)
 
     # =========================
     # SUPERVISOR

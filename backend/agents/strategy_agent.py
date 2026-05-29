@@ -1,8 +1,20 @@
 from models.agent_state import AgentState
 from services.strategy_memory import save_strategy_memory
 
-def strategy_agent(state: AgentState) -> AgentState:
+from datetime import datetime
 
+def strategy_agent(state: AgentState) -> AgentState:
+    
+    timeline = state.setdefault(
+    "execution_timeline",
+    []
+)
+
+    timeline.append({
+    "agent": "strategy_agent",
+    "event": "started",
+    "timestamp": datetime.utcnow().isoformat()
+})
     tool_results = state.get("tool_results", {})
 
     trend_data = tool_results.get("trend_data", {})
@@ -56,5 +68,11 @@ def strategy_agent(state: AgentState) -> AgentState:
     completed.append("strategy_complete")
 
     state["completed_tasks"] = completed
+    
+    timeline.append({
+    "agent": "strategy_agent",
+    "event": "completed",
+    "timestamp": datetime.utcnow().isoformat()
+    })
 
     return state

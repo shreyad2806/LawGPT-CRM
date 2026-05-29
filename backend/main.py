@@ -16,4 +16,6 @@ result = run_orchestrator(initial_state)
 
 print("\nFINAL RESULT:\n")
 
-pprint(result["tool_results"])
+from pprint import pprint
+
+pprint(result)

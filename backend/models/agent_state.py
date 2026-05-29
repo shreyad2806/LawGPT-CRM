@@ -22,3 +22,8 @@ class AgentState(TypedDict, total=False):
     trend_agent_retries: int
 
     strategy_agent_retries: int
+    
+    content_agent_retries: int
+    strategy_agent_retries : int
+    trend_agent_retries: int
+    

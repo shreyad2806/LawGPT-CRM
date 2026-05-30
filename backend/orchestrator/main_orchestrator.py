@@ -8,10 +8,9 @@ from orchestrator.memory_injector import inject_memory
 from orchestrator.retry_handler import retry_with_backoff
 from agents.analytics_agent import analytics_agent
 from agents.lead_discovery_agent import lead_discovery_agent
-from agents.lead_qualification_agent import (
-    lead_qualification_agent
-)
-
+from agents.lead_qualification_agent import lead_qualification_agent
+from agents.followup_agent import followup_agent
+from agents.memory_agent import memory_agent
 
 def run_orchestrator(state: AgentState) -> AgentState:
 
@@ -102,6 +101,19 @@ def run_orchestrator(state: AgentState) -> AgentState:
     state = lead_discovery_agent(
     state
     )
+    
+    state = lead_discovery_agent(
+    state
+)
+
+    state = lead_qualification_agent(
+    state
+)
+    
+    
+    state = followup_agent(state)
+
+    state = memory_agent(state)
 
     # =========================
     # SUPERVISOR

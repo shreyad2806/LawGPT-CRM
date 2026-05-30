@@ -41,3 +41,16 @@ print(
 from pprint import pprint
 
 pprint(dashboard_response)
+
+from agents.lead_discovery_agent import (
+    lead_discovery_agent
+)
+
+state = {
+    "tool_results": {},
+    "completed_tasks": []
+}
+
+result = lead_discovery_agent(state)
+
+print(result)

@@ -118,7 +118,11 @@ def analyze_content_performance(
     best_hooks = list(dict.fromkeys(best_hooks))[:5]
     best_ctas = list(dict.fromkeys(best_ctas))[:5]
 
-    top_performing_topics = sorted(topics, key=topics.get, reverse=True)[:5]
+    top_performing_topics = sorted(
+    topics.keys(),
+    key=lambda x: topics[x],
+    reverse=True
+    )[:5]
 
     # =====================================
     # RECOMMENDATION

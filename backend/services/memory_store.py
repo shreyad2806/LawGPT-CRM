@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from services.supabase_client import supabase
 
 

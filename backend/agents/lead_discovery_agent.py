@@ -1,13 +1,8 @@
 from datetime import datetime
 
-from services.comment_service import (
-    fetch_post_comments
-)
+from services.comment_service import fetch_post_comments
 
-from services.lead_service import (
-    save_lead
-)
-
+from services.lead_service import save_lead
 from services.logger_service import (
     log_workflow_run,
     log_agent_execution
@@ -49,7 +44,7 @@ def lead_discovery_agent(state):
             "lead_score": comment.get("lead_score"),
             "lead_category": comment.get("lead_category"),
             "status": "new",
-            "notes": comment.get("comment") or comment.get("notes")
+            "reason": comment.get("comment") or comment.get("reason") or ""
         }
 
         print("LEAD TO SAVE:", lead)

@@ -1,5 +1,5 @@
 import React from "react";
-import { StatCard, StatCardProps } from "./StatCard";
+import { StatCard, StatCardProps } from "@/components/shared/StatCard";
 
 const stats: StatCardProps[] = [
   {

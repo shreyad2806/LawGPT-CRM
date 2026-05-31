@@ -178,22 +178,22 @@ export function LeadsTable({
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Company
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Role
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Platform
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Engagement
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Score
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Category
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Status
               </th>
             </tr>
@@ -206,28 +206,28 @@ export function LeadsTable({
                   index === filteredData.length - 1 ? "border-b-0" : ""
                 }`}
               >
-                <td className="px-6 py-4 text-gray-300 font-medium">
+                <td className="px-6 py-3 text-gray-300 font-medium">
                   {lead.name}
                 </td>
-                <td className="px-6 py-4 text-gray-400">
+                <td className="px-6 py-3 text-gray-400">
                   <div className="max-w-xs truncate">{lead.company}</div>
                 </td>
-                <td className="px-6 py-4 text-gray-400">
+                <td className="px-6 py-3 text-gray-400">
                   <div className="max-w-xs truncate">{lead.role}</div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <PlatformBadge platform={lead.platform} />
                 </td>
-                <td className="px-6 py-4 text-gray-400">
+                <td className="px-6 py-3 text-gray-400">
                   <div className="max-w-xs truncate">{lead.engagement}</div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <span className="text-white font-semibold">{lead.score}</span>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <CategoryBadge category={lead.category} />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <StatusBadge status={lead.status} />
                 </td>
               </tr>

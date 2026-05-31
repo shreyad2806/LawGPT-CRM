@@ -20,7 +20,7 @@ export default function ContentPage() {
 
       {/* Main content */}
       <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-6">
+        <div className="p-5 space-y-5">
           {/* Stats Section */}
           <ContentStats />
 

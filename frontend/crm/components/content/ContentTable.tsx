@@ -104,19 +104,19 @@ export function ContentTable({ statusFilter, platformFilter }: ContentTableProps
         <table className="w-full text-sm">
           <thead className="border-b border-[#1F2937] bg-[#0A0A0F]">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Hook
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 CTA
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Platform
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Status
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Created
               </th>
             </tr>
@@ -129,19 +129,19 @@ export function ContentTable({ statusFilter, platformFilter }: ContentTableProps
                   index === filteredData.length - 1 ? "border-b-0" : ""
                 }`}
               >
-                <td className="px-6 py-4 text-gray-300">
+                <td className="px-6 py-3 text-gray-300">
                   <div className="max-w-xs truncate">{item.hook}</div>
                 </td>
-                <td className="px-6 py-4 text-gray-300">
+                <td className="px-6 py-3 text-gray-300">
                   <div className="max-w-xs truncate">{item.cta}</div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <PlatformBadge platform={item.platform} />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <StatusBadge status={item.status} />
                 </td>
-                <td className="px-6 py-4 text-gray-400">{item.created}</td>
+                <td className="px-6 py-3 text-gray-400">{item.created}</td>
               </tr>
             ))}
           </tbody>

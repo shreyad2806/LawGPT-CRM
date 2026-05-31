@@ -32,7 +32,7 @@ export function ContentFilters({
 
   return (
     <Card className="p-4">
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-5">
         {/* Status Filters */}
         <div className="flex items-center gap-3">
           <span className="text-gray-400 text-sm font-medium whitespace-nowrap">Status:</span>

@@ -138,22 +138,22 @@ export function FollowupsTable({
         <table className="w-full text-sm">
           <thead className="border-b border-[#1F2937] bg-[#0A0A0F]">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Lead
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Company
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Followup Type
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Status
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Scheduled
               </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
+              <th className="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">
                 Preview
               </th>
             </tr>
@@ -166,22 +166,22 @@ export function FollowupsTable({
                   index === filteredData.length - 1 ? "border-b-0" : ""
                 }`}
               >
-                <td className="px-6 py-4 text-gray-300 font-medium">
+                <td className="px-6 py-3 text-gray-300 font-medium">
                   {followup.lead}
                 </td>
-                <td className="px-6 py-4 text-gray-400">
+                <td className="px-6 py-3 text-gray-400">
                   <div className="max-w-xs truncate">{followup.company}</div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <TypeBadge type={followup.type} />
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-3">
                   <StatusBadge status={followup.status} />
                 </td>
-                <td className="px-6 py-4 text-gray-400 text-xs">
+                <td className="px-6 py-3 text-gray-400 text-xs">
                   {followup.scheduled}
                 </td>
-                <td className="px-6 py-4 text-gray-400">
+                <td className="px-6 py-3 text-gray-400">
                   <div className="max-w-sm truncate text-xs">
                     {followup.preview}
                   </div>

@@ -1,11 +1,24 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { FilterTabs } from "@/components/shared/FilterTabs";
 import { DataTable, Column } from "@/components/shared/DataTable";
-import { leadsMockData, type Lead } from "@/lib/mock-data/leads";
+import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
+import { getLeads } from "@/lib/api/leads";
+
+type Lead = {
+  id: string;
+  name: string;
+  company: string;
+  role: string;
+  platform: string;
+  engagement: string;
+  score: number;
+  category: string;
+  status: string;
+};
 
 type PlatformFilter = "all" | "linkedin" | "twitter";
 type CategoryFilter = "all" | "partner" | "c-level" | "associate";
@@ -62,8 +75,43 @@ function StatusBadge({
 export default function LeadsPage() {
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredData = leadsMockData.filter((lead: Lead) => {
+  useEffect(() => {
+    async function loadLeads() {
+      try {
+        const data = await getLeads();
+        console.log("LEADS API:", data);
+        setLeads(data.data || []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load leads");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLeads();
+  }, []);
+
+  if (loading) {
+    return <LoadingState message="Loading leads..." />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} />;
+  }
+
+  console.log("LEADS API DATA", leads);
+
+  const totalLeads = leads.length;
+  const qualifiedLeads = leads.filter((lead: Lead) => lead.status.toLowerCase() === "qualified").length;
+  const highIntentLeads = leads.filter((lead: Lead) => lead.score >= 80).length;
+  const conversionOpps = leads.filter((lead: Lead) => lead.status.toLowerCase() === "qualified" && lead.score >= 85).length;
+
+  const filteredData = leads.filter((lead: Lead) => {
     const platformMatch =
       platformFilter === "all" ||
       lead.platform.toLowerCase().replace("/", "") ===
@@ -126,24 +174,24 @@ export default function LeadsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
               title="TOTAL LEADS"
-              value="4,821"
+              value={totalLeads.toLocaleString()}
               description="1.2% from last mo"
             />
             <StatCard
               title="QUALIFIED LEADS"
-              value="1,029"
+              value={qualifiedLeads.toLocaleString()}
               change="+2.1%"
               trend="up"
             />
             <StatCard
               title="HIGH INTENT LEADS"
-              value="312"
+              value={highIntentLeads.toLocaleString()}
               change="+8.2%"
               trend="up"
             />
             <StatCard
               title="CONVERSION OPPS"
-              value="89"
+              value={conversionOpps.toLocaleString()}
               description="Ready to contact"
             />
           </div>

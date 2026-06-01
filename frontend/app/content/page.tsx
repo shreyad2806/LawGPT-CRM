@@ -1,11 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { FilterTabs } from "@/components/shared/FilterTabs";
 import { DataTable, Column } from "@/components/shared/DataTable";
-import { contentMockData, type ContentItem } from "@/lib/mock-data/content";
+import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
+import { getContent } from "@/lib/api/content";
+
+type ContentItem = {
+  id: string;
+  hook: string;
+  cta: string;
+  platform: string;
+  status: string;
+  created: string;
+};
 
 type StatusFilter = "all" | "draft" | "approved" | "rejected" | "posted";
 type PlatformFilter = "all" | "linkedin" | "carousel";
@@ -41,8 +51,43 @@ function PlatformBadge({ platform }: { platform: "LinkedIn" | "Carousel" }) {
 export default function ContentPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [platformFilter, setPlatformFilter] = useState<PlatformFilter>("all");
+  const [content, setContent] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredData = contentMockData.filter((item: ContentItem) => {
+  useEffect(() => {
+    async function loadContent() {
+      try {
+        const data = await getContent();
+        console.log("CONTENT API:", data);
+        setContent(data.content || []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load content");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadContent();
+  }, []);
+
+  if (loading) {
+    return <LoadingState message="Loading content..." />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} />;
+  }
+
+  console.log("CONTENT API DATA", content);
+
+  const drafts = content.filter((item: ContentItem) => item.status.toLowerCase() === "draft").length;
+  const approved = content.filter((item: ContentItem) => item.status.toLowerCase() === "approved").length;
+  const rejected = content.filter((item: ContentItem) => item.status.toLowerCase() === "rejected").length;
+  const posted = content.filter((item: ContentItem) => item.status.toLowerCase() === "posted").length;
+
+  const filteredData = content.filter((item: ContentItem) => {
     const statusMatch =
       statusFilter === "all" || item.status.toLowerCase() === statusFilter;
     const platformMatch =
@@ -90,19 +135,19 @@ export default function ContentPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
               title="DRAFTS"
-              value="142"
+              value={drafts.toString()}
             />
             <StatCard
               title="APPROVED"
-              value="187"
+              value={approved.toString()}
             />
             <StatCard
               title="REJECTED"
-              value="29"
+              value={rejected.toString()}
             />
             <StatCard
               title="POSTED"
-              value="384"
+              value={posted.toString()}
             />
           </div>
 

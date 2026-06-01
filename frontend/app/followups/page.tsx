@@ -1,11 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { FilterTabs } from "@/components/shared/FilterTabs";
 import { DataTable, Column } from "@/components/shared/DataTable";
-import { followupsMockData, type Followup } from "@/lib/mock-data/followups";
+import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
+import { getFollowups } from "@/lib/api/followups";
+
+type Followup = {
+  id: string;
+  lead: string;
+  company: string;
+  type: string;
+  status: string;
+  scheduled: string;
+  preview: string;
+};
 
 type StatusFilter = "all" | "pending" | "ready" | "sent" | "responded";
 type TypeFilter = "all" | "connection" | "value-add" | "case-study";
@@ -50,8 +61,43 @@ function TypeBadge({
 export default function FollowupsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [followups, setFollowups] = useState<Followup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filteredData = followupsMockData.filter((followup: Followup) => {
+  useEffect(() => {
+    async function loadFollowups() {
+      try {
+        const data = await getFollowups();
+        console.log("FOLLOWUPS API:", data);
+        setFollowups(data.followups || []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load followups");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadFollowups();
+  }, []);
+
+  if (loading) {
+    return <LoadingState message="Loading followups..." />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} />;
+  }
+
+  console.log("FOLLOWUPS API DATA", followups);
+
+  const pending = followups.filter((followup: Followup) => followup.status.toLowerCase() === "pending").length;
+  const readyToSend = followups.filter((followup: Followup) => followup.status.toLowerCase() === "ready").length;
+  const sent = followups.filter((followup: Followup) => followup.status.toLowerCase() === "sent").length;
+  const responded = followups.filter((followup: Followup) => followup.status.toLowerCase() === "responded").length;
+
+  const filteredData = followups.filter((followup: Followup) => {
     const statusMatch =
       statusFilter === "all" ||
       followup.status.toLowerCase() === statusFilter.toLowerCase();
@@ -105,22 +151,22 @@ export default function FollowupsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
               title="PENDING"
-              value="63"
+              value={pending.toString()}
               description="Awaiting action"
             />
             <StatCard
               title="READY TO SEND"
-              value="28"
+              value={readyToSend.toString()}
               description="Approved leads"
             />
             <StatCard
               title="SENT"
-              value="847"
+              value={sent.toString()}
               description="All time"
             />
             <StatCard
               title="RESPONDED"
-              value="214"
+              value={responded.toString()}
               description="25.3% rate"
             />
           </div>

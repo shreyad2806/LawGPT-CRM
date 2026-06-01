@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { EngagementTrendChart } from "@/components/analytics/EngagementTrendChart";
@@ -9,8 +9,43 @@ import { LeadGenerationChart } from "@/components/analytics/LeadGenerationChart"
 import { TopHashtags } from "@/components/analytics/TopHashtags";
 import { BestPerformers } from "@/components/analytics/BestPerformers";
 import { StrategyRecommendations } from "@/components/analytics/StrategyRecommendations";
+import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
+import { getAnalyticsEngagement } from "@/lib/api/analytics";
 
 export default function AnalyticsPage() {
+  const [engagementData, setEngagementData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadAnalytics() {
+      try {
+        const data = await getAnalyticsEngagement();
+        console.log("ANALYTICS API:", data);
+        setEngagementData(data);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load analytics");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadAnalytics();
+  }, []);
+
+  if (loading) {
+    return <LoadingState message="Loading analytics..." />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} />;
+  }
+
+  console.log("ANALYTICS API DATA", engagementData);
+
+  const avgEngagementScore = engagementData?.engagement_rate || 0;
+
   return (
     <div className="flex-1 flex flex-col">
       <PageHeader title="Analytics" subtitle="Content performance and AI strategy insights" />
@@ -20,7 +55,7 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard
               title="AVG ENGAGEMENT SCORE"
-              value="7.4"
+              value={avgEngagementScore.toFixed(1)}
               change="+11%"
               trend="up"
             />

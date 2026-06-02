@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import {
   LineChart,
@@ -10,15 +11,63 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { week: "Week 1", engagement: 4.2 },
-  { week: "Week 2", engagement: 5.6 },
-  { week: "Week 3", engagement: 6.1 },
-  { week: "Week 4", engagement: 7.4 },
-];
+import { getAnalyticsTrends } from "@/lib/api/analytics";
 
 export function EngagementTrendChart() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadTrends() {
+      try {
+        const response = await getAnalyticsTrends();
+        console.log("EngagementTrendChart Data:", response);
+        setData(response.trends || []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load trends");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadTrends();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Engagement Trend Over Time
+        </h3>
+        <div className="text-gray-400 text-xs">Loading...</div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Engagement Trend Over Time
+        </h3>
+        <div className="text-red-400 text-xs">{error}</div>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Engagement Trend Over Time
+        </h3>
+        <div className="text-gray-400 text-xs">No trend data available</div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">
@@ -28,7 +77,7 @@ export function EngagementTrendChart() {
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
           <XAxis
-            dataKey="week"
+            dataKey="date"
             stroke="#6B7280"
             style={{ fontSize: "12px" }}
           />

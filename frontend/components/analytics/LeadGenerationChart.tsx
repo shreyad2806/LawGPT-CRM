@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import {
   BarChart,
@@ -11,14 +12,65 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const data = [
-  { source: "LinkedIn Posts", leads: 420 },
-  { source: "Carousels", leads: 310 },
-  { source: "Case Studies", leads: 180 },
-  { source: "News Commentary", leads: 150 },
-];
-
 export function LeadGenerationChart() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadLeadData() {
+      try {
+        // Note: Lead generation by content type endpoint not yet available in backend
+        // This component requires a new backend endpoint: GET /api/analytics/lead-generation
+        // For now, showing empty state
+        console.log("LeadGenerationChart: Backend endpoint not available");
+        setData([]);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load lead generation data");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadLeadData();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Lead Generation By Content
+        </h3>
+        <div className="text-gray-400 text-xs">Loading...</div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Lead Generation By Content
+        </h3>
+        <div className="text-red-400 text-xs">{error}</div>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Lead Generation By Content
+        </h3>
+        <div className="text-gray-400 text-xs">
+          Lead generation data requires backend endpoint: GET /api/analytics/lead-generation
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">

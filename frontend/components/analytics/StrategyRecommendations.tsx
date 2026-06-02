@@ -1,32 +1,13 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
+import { getAnalyticsRecommendations } from "@/lib/api/analytics";
 
 interface Recommendation {
-  text: string;
   priority: "high" | "medium" | "low";
+  text: string;
 }
-
-const recommendations: Recommendation[] = [
-  {
-    text: "Increase AI Contract Review content frequency",
-    priority: "high",
-  },
-  {
-    text: "Create more compliance-focused carousels",
-    priority: "high",
-  },
-  {
-    text: "Use statistic-driven hooks",
-    priority: "medium",
-  },
-  {
-    text: "Prioritize LinkedIn over Twitter",
-    priority: "medium",
-  },
-  {
-    text: "Expand case study content",
-    priority: "low",
-  },
-];
 
 function PriorityBadge({ priority }: { priority: "high" | "medium" | "low" }) {
   const styles = {
@@ -49,6 +30,60 @@ function PriorityBadge({ priority }: { priority: "high" | "medium" | "low" }) {
 }
 
 export function StrategyRecommendations() {
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadRecommendations() {
+      try {
+        const data = await getAnalyticsRecommendations();
+        console.log("StrategyRecommendations Data:", data);
+        setRecommendations(data || []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load recommendations");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadRecommendations();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Strategy Recommendations
+        </h3>
+        <div className="text-gray-400 text-xs">Loading...</div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Strategy Recommendations
+        </h3>
+        <div className="text-red-400 text-xs">{error}</div>
+      </Card>
+    );
+  }
+
+  if (!recommendations || recommendations.length === 0) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Strategy Recommendations
+        </h3>
+        <div className="text-gray-400 text-xs">No recommendations available</div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">

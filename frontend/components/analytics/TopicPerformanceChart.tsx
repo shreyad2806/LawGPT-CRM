@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import {
   BarChart,
@@ -10,16 +11,63 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-
-const data = [
-  { topic: "AI Contract Review", score: 94 },
-  { topic: "GDPR Compliance", score: 87 },
-  { topic: "Employment Law", score: 82 },
-  { topic: "IP Litigation", score: 78 },
-  { topic: "M&A Due Diligence", score: 73 },
-];
+import { getAnalyticsTopics } from "@/lib/api/analytics";
 
 export function TopicPerformanceChart() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadTopics() {
+      try {
+        const response = await getAnalyticsTopics();
+        console.log("TopicPerformanceChart Data:", response);
+        setData(response || []);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load topics");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadTopics();
+  }, []);
+
+  if (loading) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Top Topics By Engagement
+        </h3>
+        <div className="text-gray-400 text-xs">Loading...</div>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Top Topics By Engagement
+        </h3>
+        <div className="text-red-400 text-xs">{error}</div>
+      </Card>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Top Topics By Engagement
+        </h3>
+        <div className="text-gray-400 text-xs">No topic data available</div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">

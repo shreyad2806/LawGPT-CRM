@@ -58,18 +58,24 @@ def save_lead(
 
 
 def get_all_leads() -> List[Dict[str, Any]]:
+    try:
+        print("GET /api/leads called - fetching leads from Supabase")
+        response = (
+            supabase
+            .table("leads")
+            .select("*")
+            .execute()
+        )
 
-    response = (
-        supabase
-        .table("leads")
-        .select("*")
-        .execute()
-    )
-
-    return cast(
-        List[Dict[str, Any]],
-        response.data or []
-    )
+        leads = cast(
+            List[Dict[str, Any]],
+            response.data or []
+        )
+        print(f"Lead count: {len(leads)}")
+        return leads
+    except Exception as e:
+        print(f"Error fetching leads: {e}")
+        raise
 
 
 def get_new_leads() -> List[Dict[str, Any]]:

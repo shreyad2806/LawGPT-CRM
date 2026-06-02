@@ -6,7 +6,7 @@ import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
 import { getLeads } from "@/lib/api/leads";
 
 export function TopQualifiedLeadsTable() {
-  const [leads, setLeads] = useState<any>(null);
+  const [leads, setLeads] = useState<any>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -14,8 +14,10 @@ export function TopQualifiedLeadsTable() {
     async function loadLeads() {
       try {
         const data = await getLeads();
-        console.log("TOP LEADS API:", data);
-        setLeads(data.data || []);
+        console.log("TOP LEADS API - full response:", data);
+        console.log("TOP LEADS API - leads array:", data?.leads);
+        console.log("TOP LEADS API - leads length:", data?.leads?.length ?? 0);
+        setLeads(data?.leads || []);
       } catch (err) {
         console.error(err);
         setError("Failed to load leads");

@@ -83,8 +83,10 @@ export default function LeadsPage() {
     async function loadLeads() {
       try {
         const data = await getLeads();
-        console.log("LEADS API:", data);
-        setLeads(data.data || []);
+        console.log("LEADS API - full response:", data);
+        console.log("LEADS API - leads array:", data?.leads);
+        console.log("LEADS API - leads length:", data?.leads?.length ?? 0);
+        setLeads(data?.leads || []);
       } catch (err) {
         console.error(err);
         setError("Failed to load leads");

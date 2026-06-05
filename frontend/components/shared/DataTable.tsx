@@ -16,7 +16,7 @@ interface DataTableProps<T> {
 
 export function DataTable<T>({ data, columns, emptyMessage = "No data available", onRowClick }: DataTableProps<T>) {
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-visible">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="border-b border-[#1F2937] bg-[#0A0A0F]">

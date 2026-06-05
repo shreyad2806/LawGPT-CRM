@@ -22,6 +22,19 @@ def get_dashboard_stats() -> Dict[str, Any]:
         .execute()
     )
     content_generated = content_response.count if content_response.count else 0
+
+    # Count generated infographics (non-null infographic_url)
+    try:
+        infographics_response = (
+            supabase
+            .table("content_queue")
+            .select("id", count="exact")
+            .not_("infographic_url", "is", None)
+            .execute()
+        )
+        infographics_generated = infographics_response.count if infographics_response.count else 0
+    except Exception:
+        infographics_generated = 0
     
     # Get qualified leads count from leads table
     # Qualified leads are those with qualification_status = 'qualified' or status = 'qualified'
@@ -63,6 +76,7 @@ def get_dashboard_stats() -> Dict[str, Any]:
     return {
         "trendsAnalyzed": trends_analyzed,
         "contentGenerated": content_generated,
+        "infographicsGenerated": infographics_generated,
         "qualifiedLeads": qualified_leads,
         "followupsPending": followups_pending
     }

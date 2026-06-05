@@ -7,6 +7,7 @@ from services.logger_service import (
 )
 
 from services.memory_store import save_memory
+from services.trend_service import save_trend
 
 import time
 from datetime import datetime
@@ -91,6 +92,37 @@ def trend_agent(state):
             memory_type="trend_result",
             memory_data=result
         )
+
+        # Persist individual trends to the database, ensuring no duplicates.
+        # The workflow result may contain trends under several keys; try common ones.
+        trend_list = None
+        if isinstance(result, dict):
+            for key in ("trends", "data", "items", "results"):
+                if key in result and isinstance(result[key], list):
+                    trend_list = result[key]
+                    break
+        elif isinstance(result, list):
+            trend_list = result
+
+        if trend_list:
+            for t in trend_list:
+                try:
+                    saved = save_trend(t or {})
+                    # Log successful save for this trend
+                    log_agent_execution(
+                        agent_name="trend_agent",
+                        task="trend_analysis",
+                        decision="success",
+                        metadata={"trend": saved}
+                    )
+                except Exception as e:
+                    # Log failure for this trend
+                    log_agent_execution(
+                        agent_name="trend_agent",
+                        task="trend_analysis",
+                        decision="failed",
+                        metadata={"error": str(e), "input": t}
+                    )
 
     # =========================
     # UPDATE STATE

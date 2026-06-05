@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import { getContent } from "@/lib/api/content";
+import StatusDropdown from "@/components/content/status-dropdown";
 
 export function RecentContentTable() {
   const [content, setContent] = useState<any>(null);
@@ -49,6 +50,18 @@ export function RecentContentTable() {
 
   const contentData = content?.content || [];
 
+  const normalizeStatus = (s: any) => {
+    if (!s) return "Draft";
+    const str = String(s);
+    const lower = str.toLowerCase();
+    if (lower === "draft") return "Draft";
+    if (lower === "approved") return "Approved";
+    if (lower === "rejected") return "Rejected";
+    if (lower === "posted") return "Posted";
+    // fallback
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
   return (
     <Card className="flex flex-col mt-4">
       <div className="flex justify-between items-center p-4 border-b border-[#1F2937]">
@@ -62,13 +75,20 @@ export function RecentContentTable() {
               <h3 className="text-[13px] font-medium text-white mb-1">{item.hook}</h3>
               <p className="text-[11px] text-gray-500 font-medium">{item.platform}</p>
             </div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-              item.status === "Draft" ? "text-[#F59E0B] bg-amber-500/10" :
-              item.status === "Approved" ? "text-[#3B82F6] bg-blue-500/10" :
-              "text-[#22C55E] bg-green-500/10"
-            }`}>
-              {item.status}
-            </span>
+            <div>
+              <StatusDropdown
+                value={normalizeStatus(item.status)}
+                contentId={item.id}
+                onChange={(newStatus: string) => {
+                  // optimistic local update
+                  setContent((prev: any) => {
+                    if (!prev) return prev;
+                    return { ...prev, content: (prev.content || []).map((c: any) => (c.id === item.id ? { ...c, status: newStatus } : c)) };
+                  });
+                }}
+                onToast={(msg: string) => console.log(msg)}
+              />
+            </div>
           </div>
         ))}
       </div>

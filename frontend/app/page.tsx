@@ -1,7 +1,6 @@
 import React from "react";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
-import { AgentTimeline } from "@/components/dashboard/AgentTimeline";
 import { RecentTrends } from "@/components/dashboard/RecentTrends";
 import { RecentContentTable } from "@/components/dashboard/RecentContentTable";
 import { TopQualifiedLeadsTable } from "@/components/dashboard/TopQualifiedLeadsTable";
@@ -12,14 +11,13 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto">
         <DashboardHeader />
         <StatsGrid />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
-          <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
-            <AgentTimeline />
+
+        <div className="grid grid-cols-1 gap-6 pb-12">
+          <div className="col-span-1">
+            <RecentTrends />
           </div>
 
-          <div className="lg:col-span-5 xl:col-span-4 flex flex-col">
-            <RecentTrends />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <RecentContentTable />
             <TopQualifiedLeadsTable />
           </div>

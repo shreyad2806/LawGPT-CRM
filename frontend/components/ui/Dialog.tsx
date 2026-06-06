@@ -5,9 +5,10 @@ interface DialogProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: string;
+  maxWidth?: string;
 }
 
-export function Dialog({ open, onClose, children, title }: DialogProps) {
+export function Dialog({ open, onClose, children, title, maxWidth = "w-[70%]" }: DialogProps) {
   if (!open) return null;
 
   return (
@@ -19,7 +20,7 @@ export function Dialog({ open, onClose, children, title }: DialogProps) {
       />
 
       {/* Dialog Content */}
-      <div className="relative bg-[#0A0A0F] border border-[#1F2937] rounded-lg shadow-2xl w-[70%] max-h-[90vh] overflow-hidden flex flex-col">
+      <div className={`relative bg-[#0A0A0F] border border-[#1F2937] rounded-lg shadow-2xl ${maxWidth} max-h-[90vh] overflow-hidden flex flex-col`}>
         {/* Header */}
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-[#1F2937]">

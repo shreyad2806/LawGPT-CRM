@@ -12,9 +12,12 @@ import {
   X,
 } from "lucide-react";
 
-const NAV_ITEMS = [
+// Static navigation configuration — MUST be identical on server and client.
+// Keep this array pure and deterministic: no runtime mutations, no Date.now/Math.random/typeof window.
+const NAV_ITEMS: ReadonlyArray<{ name: string; href: string; icon: any }> = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Content", href: "/content", icon: FileText },
+  { name: "Engagements", href: "/engagements", icon: MessageSquare },
   { name: "Leads", href: "/leads", icon: Users },
   { name: "Followups", href: "/followups", icon: MessageSquare },
   { name: "Analytics", href: "/analytics", icon: BarChart2 },

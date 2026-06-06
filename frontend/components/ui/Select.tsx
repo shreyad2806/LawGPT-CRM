@@ -24,7 +24,21 @@ export function Select({ value, onChange, options, disabled = false, loading = f
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuStyle, setMenuStyle] = useState<{ top: number; left: number; transformOrigin?: string } | null>(null);
 
+  const handleSelect = (optionValue: string) => {
+    // Debug: log selection
+    // eslint-disable-next-line no-console
+    console.log("Select handleSelect called with:", optionValue);
+    console.log("Calling onChange with:", optionValue);
+    onChange(optionValue);
+    console.log("onChange called, setting isOpen to false");
+    setIsOpen(false);
+  };
+
   const selectedOption = options.find(opt => opt.value.toLowerCase() === (value || "").toLowerCase());
+
+  // Debug: log selected option
+  // eslint-disable-next-line no-console
+  console.log("Select - value prop:", value, "selectedOption:", selectedOption);
 
   useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
@@ -104,14 +118,6 @@ export function Select({ value, onChange, options, disabled = false, loading = f
     }
   }, [isOpen, menuRef.current, menuStyle]);
 
-  const handleSelect = (optionValue: string) => {
-    // Debug: log selection
-    // eslint-disable-next-line no-console
-    console.log("Select clicked option:", optionValue);
-    onChange(optionValue);
-    setIsOpen(false);
-  };
-
   const buttonStyles = variant === "badge"
     ? `flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
         disabled || loading ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:opacity-80"
@@ -152,16 +158,19 @@ export function Select({ value, onChange, options, disabled = false, loading = f
           <div
             ref={menuRef}
             style={{ position: "absolute", top: menuStyle ? menuStyle.top : 0, left: menuStyle ? menuStyle.left : 0 }}
-            className={"z-[9999] bg-slate-900 border border-slate-700 shadow-2xl rounded-xl min-w-[140px] overflow-hidden"}
+            className={"z-[99999] bg-slate-900 border border-slate-700 shadow-2xl rounded-xl min-w-[140px] overflow-hidden"}
           >
             {options.map((option) => (
   <button
     key={option.value}
     onClick={(e) => {
       e.stopPropagation();
+      e.preventDefault();
       // eslint-disable-next-line no-console
-      console.log("click:", option.value);
+      console.log("click:", option.value, "event:", e);
+      console.log("Before handleSelect, current value:", value);
       handleSelect(option.value);
+      console.log("After handleSelect");
     }}
 
       className={`w-full text-left px-3 py-2 text-sm transition-all ${

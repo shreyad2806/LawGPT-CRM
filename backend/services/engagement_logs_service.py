@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional
-from services.supabase_client import supabase
+from services.supabase_client import supabase, safe_insert, safe_update
 from services.vision_service import extract_from_screenshot
+from services.lead_activity_service import log_engagement_created, log_lead_created, log_ai_qualified
 import os
 from openai import OpenAI
 
@@ -19,6 +20,8 @@ ENGAGEMENT_LOGS_COLUMNS = {
     "intent",
     "lead_score",
     "lead_quality",
+    "score_reason",
+    "tags",
     "ai_summary",
     "recommended_action",
     "converted_to_lead",
@@ -85,8 +88,12 @@ def create_engagement_log(data: Dict[str, Any]) -> Dict[str, Any]:
         intent = vision_extracted.get("intent")
         lead_score = vision_extracted.get("lead_score")
         lead_quality = vision_extracted.get("lead_quality")
+        score_reason = vision_extracted.get("score_reason")
         ai_summary = vision_extracted.get("ai_summary")
         recommended_action = vision_extracted.get("recommended_action")
+        qualification_reason = vision_extracted.get("qualification_reason")
+        confidence = vision_extracted.get("confidence")
+        tags = vision_extracted.get("tags")
         
         insert_data = {
             "platform": platform,
@@ -106,10 +113,18 @@ def create_engagement_log(data: Dict[str, Any]) -> Dict[str, Any]:
             insert_data["lead_score"] = lead_score
         if lead_quality and "lead_quality" in ENGAGEMENT_LOGS_COLUMNS:
             insert_data["lead_quality"] = lead_quality
+        if score_reason and "score_reason" in ENGAGEMENT_LOGS_COLUMNS:
+            insert_data["score_reason"] = score_reason
+        if tags and "tags" in ENGAGEMENT_LOGS_COLUMNS:
+            insert_data["tags"] = tags
         if ai_summary and "ai_summary" in ENGAGEMENT_LOGS_COLUMNS:
             insert_data["ai_summary"] = ai_summary
         if recommended_action and "recommended_action" in ENGAGEMENT_LOGS_COLUMNS:
             insert_data["recommended_action"] = recommended_action
+        if qualification_reason and "qualification_reason" in ENGAGEMENT_LOGS_COLUMNS:
+            insert_data["qualification_reason"] = qualification_reason
+        if confidence is not None and "confidence" in ENGAGEMENT_LOGS_COLUMNS:
+            insert_data["confidence"] = confidence
         
         # Filter insert_data to only include columns that exist in ENGAGEMENT_LOGS_COLUMNS
         insert_data = {k: v for k, v in insert_data.items() if k in ENGAGEMENT_LOGS_COLUMNS}
@@ -118,7 +133,7 @@ def create_engagement_log(data: Dict[str, Any]) -> Dict[str, Any]:
         insert_data = {k: v for k, v in insert_data.items() if v is not None}
         
         print("INSERT DATA:", insert_data)
-        response = supabase.table("engagement_logs").insert(insert_data).execute()
+        response = safe_insert("engagement_logs", insert_data)
         print("[engagement_logs_service] SUPABASE RESPONSE:", response.data)
         return response.data[0] if response.data else {}
     except ValueError as e:
@@ -334,14 +349,28 @@ def create_lead_from_engagement(engagement_data: Dict[str, Any], analysis: Dict[
             "status": "new",
             "lead_score": analysis.get("lead_score", 50),
             "lead_quality": analysis.get("lead_quality", "Cold"),
+            "score_reason": analysis.get("score_reason"),
+            "recommended_action": analysis.get("recommended_action"),
+            "qualification_reason": analysis.get("qualification_reason"),
+            "confidence": analysis.get("confidence"),
+            "tags": analysis.get("tags"),
             "reason": f"Created from engagement: {engagement_data.get('message', '')[:200]}",
         }
+        
+        # Auto-calculate priority based on lead_score
+        lead_score = analysis.get("lead_score", 50)
+        if lead_score > 80:
+            lead_data["priority"] = "Hot"
+        elif lead_score >= 60:
+            lead_data["priority"] = "Warm"
+        else:
+            lead_data["priority"] = "Cold"
         
         # Remove None values
         lead_data = {k: v for k, v in lead_data.items() if v is not None and v != ""}
         
         print("[engagement_logs_service] INSERT LEAD DATA:", lead_data)
-        response = supabase.table("leads").insert(lead_data).execute()
+        response = safe_insert("leads", lead_data)
         print("[engagement_logs_service] SUPABASE RESPONSE:", response.data)
         return response.data[0] if response.data else {}
     except Exception as e:
@@ -407,8 +436,18 @@ def save_engagement_with_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
         
         # STEP 3: Automatically create lead (only if analysis exists and score is reasonable)
         if analysis and analysis.get("lead_score", 0) > 30:
-            lead = create_lead_from_engagement(engagement, analysis)
+            lead_result = create_lead_from_engagement(engagement, analysis)
+            
+            lead = lead_result
             print("[engagement_logs_service] Lead created:", lead)
+            
+            # Log lead created activity
+            if lead and lead.get("id"):
+                log_lead_created(lead["id"], lead)
+                # Log AI qualified activity
+                log_ai_qualified(lead["id"], analysis)
+                # Log engagement created activity
+                log_engagement_created(lead["id"], engagement)
         else:
             lead = None
             print("[engagement_logs_service] Lead score too low or no analysis, skipping lead creation")

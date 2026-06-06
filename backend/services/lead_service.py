@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, cast
 
-from services.supabase_client import supabase
+from services.supabase_client import supabase, safe_insert, safe_update
+from services.lead_activity_service import log_lead_created
 
 
 # Actual columns from Supabase leads table
@@ -17,6 +18,12 @@ LEAD_COLUMNS = {
     "lead_score",
     "lead_category",
     "lead_quality",
+    "score_reason",
+    "recommended_action",
+    "priority",
+    "qualification_reason",
+    "confidence",
+    "tags",
     "reason",
     "status",
     "qualification_score",
@@ -49,12 +56,14 @@ def save_lead(
     print("\nPAYLOAD TO SUPABASE:")
     print(payload)
 
-    return (
-        supabase
-        .table("leads")
-        .insert(payload)
-        .execute()
-    )
+    result = safe_insert("leads", payload)
+    
+    # Log lead created activity
+    if result and result.data:
+        lead = result.data[0]
+        log_lead_created(lead["id"], lead)
+    
+    return result
 
 
 def get_all_leads() -> List[Dict[str, Any]]:
@@ -118,6 +127,35 @@ def update_lead(
         .eq("id", lead_id)
         .execute()
     )
+
+
+def get_lead_by_id(lead_id: int) -> Dict[str, Any]:
+    """Get a single lead by ID."""
+    try:
+        print(f"GET /api/leads/{lead_id} called - fetching lead from Supabase")
+        response = (
+            supabase
+            .table("leads")
+            .select("*")
+            .eq("id", lead_id)
+            .execute()
+        )
+
+        leads = cast(
+            List[Dict[str, Any]],
+            response.data or []
+        )
+        
+        if not leads:
+            print(f"Lead with id {lead_id} not found")
+            return None
+        
+        lead = leads[0]
+        print(f"Lead found: {lead.get('name', 'Unknown')}")
+        return lead
+    except Exception as e:
+        print(f"Error fetching lead by id: {e}")
+        raise
 
 
 def delete_lead(

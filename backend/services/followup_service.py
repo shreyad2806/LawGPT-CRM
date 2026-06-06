@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, cast
 
-from services.supabase_client import supabase
+from services.supabase_client import supabase, safe_insert, safe_update
 
 
 # Actual columns from Supabase lead_followups table
@@ -41,12 +41,7 @@ def save_followup(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         print("\nPAYLOAD TO SUPABASE:")
         print(payload)
 
-        response = (
-            supabase
-            .table("lead_followups")
-            .insert(payload)
-            .execute()
-        )
+        response = safe_insert("lead_followups", payload)
 
         return cast(List[Dict[str, Any]], response.data or [])
     except Exception as e:

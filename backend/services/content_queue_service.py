@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional, cast
 
-from services.supabase_client import supabase
+from services.supabase_client import supabase, safe_insert, safe_update
 
 
 # Actual columns from Supabase content_queue table
@@ -41,18 +41,13 @@ def enqueue_generated_content(content_data: Dict[str, Any]) -> List[Dict[str, An
         raise KeyError("content_data missing required key: 'linkedin_post'") from e
 
     try:
-        response = (
-            supabase
-            .table("content_queue")
-            .insert({
-                "generated_post": generated_post,
-                "hook": content_data.get("hook"),
-                "cta": content_data.get("cta"),
-                "status": "draft",
-                "payload": content_data
-            })
-            .execute()
-        )
+        response = safe_insert("content_queue", {
+            "generated_post": generated_post,
+            "hook": content_data.get("hook"),
+            "cta": content_data.get("cta"),
+            "status": "draft",
+            "payload": content_data
+        })
 
         print("[content_queue_service] supabase.insert response.error:", getattr(response, 'error', None))
         print("[content_queue_service] supabase.insert returned rows:", response.data)
@@ -133,12 +128,7 @@ def create_content(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         print("\nPAYLOAD TO SUPABASE:")
         print(payload)
 
-        response = (
-            supabase
-            .table("content_queue")
-            .insert(payload)
-            .execute()
-        )
+        response = safe_insert("content_queue", payload)
 
         print("[content_queue_service] supabase.insert response.error:", getattr(response, 'error', None))
         print("[content_queue_service] supabase.insert returned rows:", response.data)

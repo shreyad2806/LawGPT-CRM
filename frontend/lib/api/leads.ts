@@ -6,3 +6,24 @@ export async function getLeads() {
   console.log("Response:", response.data);
   return response.data;
 }
+
+export async function searchLeads(query: string) {
+  console.log(`Searching leads with query: ${query}`);
+  const response = await api.get(`/api/leads/search?query=${encodeURIComponent(query)}`);
+  console.log("Search Response:", response.data);
+  return response.data;
+}
+
+export async function getLeadById(leadId: number) {
+  console.log(`Fetching from: /api/leads/${leadId}`);
+  const response = await api.get(`/api/leads/${leadId}`);
+  console.log("Response:", response.data);
+  return response.data;
+}
+
+export async function getLeadActivities(leadId: number) {
+  console.log(`Fetching from: /api/leads/${leadId}/activities`);
+  const response = await api.get(`/api/leads/${leadId}/activities`);
+  console.log("Response:", response.data);
+  return response.data;
+}

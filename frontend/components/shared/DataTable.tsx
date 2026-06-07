@@ -36,7 +36,7 @@ export function DataTable<T>({ data, columns, emptyMessage = "No data available"
           <tbody>
             {data.map((row, index) => (
               <tr
-                key={index}
+                key={(row as any).id ?? index}
                 className={`border-b border-[#1F2937] hover:bg-[#111827]/50 transition-colors cursor-pointer ${
                   index === data.length - 1 ? "border-b-0" : ""
                 }`}

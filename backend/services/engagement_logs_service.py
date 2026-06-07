@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from services.supabase_client import supabase, safe_insert, safe_update
 from services.vision_service import extract_from_screenshot
 from services.lead_activity_service import log_engagement_created, log_lead_created, log_ai_qualified
@@ -46,7 +46,7 @@ def get_engagement_logs() -> List[Dict[str, Any]]:
     """Get all engagement logs."""
     try:
         response = supabase.table("engagement_logs").select("*").order("created_at", desc=True).execute()
-        return response.data
+        return cast(List[Dict[str, Any]], response.data or [])
     except Exception as e:
         print(f"[engagement_logs_service] Error fetching engagement logs: {e}")
         return []
@@ -135,7 +135,7 @@ def create_engagement_log(data: Dict[str, Any]) -> Dict[str, Any]:
         print("INSERT DATA:", insert_data)
         response = safe_insert("engagement_logs", insert_data)
         print("[engagement_logs_service] SUPABASE RESPONSE:", response.data)
-        return response.data[0] if response.data else {}
+        return cast(Dict[str, Any], response.data[0]) if response.data else {}
     except ValueError as e:
         # Re-raise ValueError as-is (these are our custom errors)
         raise
@@ -157,7 +157,7 @@ def update_engagement_log(engagement_id: int, updates: Dict[str, Any]) -> Dict[s
         print("[engagement_logs_service] UPDATE DATA:", valid_updates)
         response = supabase.table("engagement_logs").update(valid_updates).eq("id", engagement_id).execute()
         print("[engagement_logs_service] SUPABASE RESPONSE:", response.data)
-        return response.data[0] if response.data else {}
+        return cast(Dict[str, Any], response.data[0]) if response.data else {}
     except Exception as e:
         print(f"[engagement_logs_service] SUPABASE ERROR: {e}")
         print(f"[engagement_logs_service] Error updating engagement log: {e}")
@@ -229,7 +229,10 @@ Return only valid JSON.
         
         # Parse JSON response
         import json
-        analysis = json.loads(result_text)
+        if result_text:
+            analysis = json.loads(result_text)
+        else:
+            analysis = {}
         
         return {
             "intent": analysis.get("intent", "Unknown"),
@@ -358,7 +361,7 @@ def create_lead_from_engagement(engagement_data: Dict[str, Any], analysis: Dict[
         }
         
         # Auto-calculate priority based on lead_score
-        lead_score = analysis.get("lead_score", 50)
+        lead_score = analysis.get("lead_score") or 50
         if lead_score > 80:
             lead_data["priority"] = "Hot"
         elif lead_score >= 60:
@@ -372,7 +375,7 @@ def create_lead_from_engagement(engagement_data: Dict[str, Any], analysis: Dict[
         print("[engagement_logs_service] INSERT LEAD DATA:", lead_data)
         response = safe_insert("leads", lead_data)
         print("[engagement_logs_service] SUPABASE RESPONSE:", response.data)
-        return response.data[0] if response.data else {}
+        return cast(Dict[str, Any], response.data[0]) if response.data else {}
     except Exception as e:
         print(f"[engagement_logs_service] SUPABASE ERROR: {e}")
         print(f"[engagement_logs_service] Error creating lead from engagement: {e}")
@@ -434,12 +437,16 @@ def save_engagement_with_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
                     "analysis": None
                 }
         
-        # STEP 3: Automatically create lead (only if analysis exists and score is reasonable)
-        if analysis and analysis.get("lead_score", 0) > 30:
+        # STEP 3: Automatically create lead (only if analysis exists)
+        if analysis:
             lead_result = create_lead_from_engagement(engagement, analysis)
             
             lead = lead_result
             print("[engagement_logs_service] Lead created:", lead)
+            
+            print("========== LEAD OBJECT ==========")
+            print(lead)
+            print("Lead ID:", lead.get("id"))
             
             # Log lead created activity
             if lead and lead.get("id"):
@@ -448,9 +455,38 @@ def save_engagement_with_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
                 log_ai_qualified(lead["id"], analysis)
                 # Log engagement created activity
                 log_engagement_created(lead["id"], engagement)
+                
+                # Auto-create first followup with complete context
+                try:
+                    from services.followup_service import create_followup_from_lead
+                    from services.lead_activity_service import log_followup_created
+                    
+                    print("========== CREATE FOLLOWUP FROM ENGAGEMENT ==========")
+                    print("Lead:", lead)
+                    print("Engagement:", engagement)
+                    print("Analysis:", analysis)
+                    
+                    followup = create_followup_from_lead(
+                        lead=lead,
+                        engagement=engagement,
+                        analysis=analysis
+                    )
+                    
+                    print("FOLLOWUP RESULT")
+                    print(followup)
+                    
+                    if followup:
+                        print(f"[engagement_logs_service] Auto-created initial followup id={followup.get('id')}")
+                        log_followup_created(lead["id"],{"action": "Initial Outreach","notes": "Auto-created on lead capture"})
+                    else:
+                        print("[engagement_logs_service] Followup not created (duplicate or error)")
+                except Exception as e:
+                    print(f"[engagement_logs_service] Error auto-creating followup: {e}")
+                    import traceback
+                    traceback.print_exc()
         else:
             lead = None
-            print("[engagement_logs_service] Lead score too low or no analysis, skipping lead creation")
+            print("[engagement_logs_service] No analysis available, skipping lead creation")
         
         # STEP 4: Update engagement_logs with converted_to_lead = true (only if lead was created)
         if lead and lead.get("id"):
@@ -466,8 +502,12 @@ def save_engagement_with_analysis(data: Dict[str, Any]) -> Dict[str, Any]:
             "analysis": analysis
         }
     except ValueError as e:
-        # Re-raise ValueError as-is (these are our custom errors from vision extraction)
         raise
+
     except Exception as e:
         print(f"[engagement_logs_service] Error in save_engagement_with_analysis: {e}")
+
+        import traceback
+        traceback.print_exc()
+
         raise

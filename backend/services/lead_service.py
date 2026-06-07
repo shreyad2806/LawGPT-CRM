@@ -1,7 +1,8 @@
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, cast, Optional
 
 from services.supabase_client import supabase, safe_insert, safe_update
 from services.lead_activity_service import log_lead_created
+from services.followup_service import create_followup_from_lead
 
 
 # Actual columns from Supabase leads table
@@ -62,6 +63,19 @@ def save_lead(
     if result and result.data:
         lead = result.data[0]
         log_lead_created(lead["id"], lead)
+        
+        # Auto-create followup for the new lead
+        print("[lead_service] Auto-creating followup for new lead")
+        try:
+            followup = create_followup_from_lead(lead=lead)
+            if followup:
+                print(f"[lead_service] Followup created successfully: id={followup.get('id')}")
+            else:
+                print("[lead_service] Followup not created (duplicate or error)")
+        except Exception as e:
+            print(f"[lead_service] Error creating followup: {e}")
+            import traceback
+            traceback.print_exc()
     
     return result
 
@@ -129,7 +143,7 @@ def update_lead(
     )
 
 
-def get_lead_by_id(lead_id: int) -> Dict[str, Any]:
+def get_lead_by_id(lead_id: int) -> Optional[Dict[str, Any]]:
     """Get a single lead by ID."""
     try:
         print(f"GET /api/leads/{lead_id} called - fetching lead from Supabase")

@@ -1,0 +1,934 @@
+{
+  "name": "LawGPT Trend Automation(1)",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -16,
+        144
+      ],
+      "id": "77fc59ac-12f0-401b-9523-9b22b70a5594",
+      "name": "Fetch RSS Feed"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        -208
+      ],
+      "id": "68afd21d-4057-4cab-8dab-52fe05fe59c3",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "maxItems": 10
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        880,
+        208
+      ],
+      "id": "628fe1e7-da6f-47d9-a751-63098e975413",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0203cd8a-9bd1-439f-a0b5-67bb915e6147",
+              "name": "Title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "32446b16-155b-4024-a387-7a74377e638d",
+              "name": "summary",
+              "value": "={{ $json.contentSnippet }}",
+              "type": "string"
+            },
+            {
+              "id": "758c09ae-8558-42cf-a448-23c4495d96fd",
+              "name": "url",
+              "value": "={{ $json.link }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1040,
+        16
+      ],
+      "id": "9d79d7c1-3667-436b-9450-d1bb1c16fcfb",
+      "name": "Extract Article Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n  \"Authorization\": \"Bearer YOUR_OPENAI_API_KEY\"\n}",
+        "sendBody": true,
+        "specifyBody": "=json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{\n{\n  \"model\": \"gpt-4.1-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a legal intelligence analyst. Analyze legal, compliance, AI-law, legal-tech, litigation, privacy, employment law, regulation, and law firm industry news. Return ONLY valid JSON. No markdown. No explanations.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": `Analyze this legal article.\n\nTitle:\n${$json.Title}\n\nSummary:\n${$json.summary}\n\nURL:\n${$json.url}\n\nReturn ONLY valid JSON in this exact structure:\n\n{\n  \"trend_title\":\"\",\n  \"summary\":\"\",\n  \"category\":\"\",\n  \"trend_score\":0,\n  \"urgency\":\"\",\n  \"lawgpt_opportunity\":\"\",\n  \"target_audience\":\"\"\n}\n\nSCORING:\n\n90-100\nMajor legal market shift with strong implications for law firms, legal departments, compliance teams, or legal technology.\n\n75-89\nStrong legal industry trend that deserves attention and content coverage.\n\n60-74\nRelevant niche trend affecting a specific legal segment.\n\nBelow 60\nLow importance.\n\nCATEGORIES:\n\nLegal AI\nCompliance\nLitigation\nEmployment\nPrivacy\nRegulation\nLegal Tech\nContracts\n\nURGENCY:\n\nhigh\nmedium\nlow\n\nSUMMARY RULES:\n\nMaximum 2 sentences.\n\nTARGET AUDIENCE MUST BE ONE OF:\n\nLaw Firm Partners\nGeneral Counsel\nLegal Operations\nCompliance Officers\nIn-House Legal Teams\nLegal Tech Buyers\n\nLAWGPT OPPORTUNITY:\n\nExplain specifically how LawGPT could help legal teams respond to this trend.\n\nExamples:\n- contract review automation\n- legal research acceleration\n- compliance monitoring\n- litigation preparation\n- document analysis\n- regulatory tracking\n- risk assessment\n\nReturn valid JSON only.`\n    }\n  ],\n  \"temperature\": 0.2,\n  \"response_format\": {\n    \"type\": \"json_object\"\n  }\n}\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1184,
+        208
+      ],
+      "id": "eec26e6b-d529-494b-97e2-f31eded715f5",
+      "name": "AI Trend Analysis"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1825ff0b-f64d-44b3-a6f1-63dd43262a7f",
+              "name": "analysis",
+              "value": "={{ JSON.parse($json.choices[0].message.content) }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1360,
+        208
+      ],
+      "id": "95afa279-b232-4b14-ad82-aa1748870f44",
+      "name": "Parse Trend Analysis"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_SUPABASE_URL/rest/v1/trends?on_conflict=url",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "YOUR_SUPABASE_KEY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_SUPABASE_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation,resolution=merge-duplicates"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"title\": \"{{ $json.analysis.trend_title }}\",\n  \"summary\": \"{{ $json.analysis.summary }}\",\n  \"category\": \"{{ $json.analysis.category }}\",\n  \"trend_score\": {{ $json.analysis.trend_score }},\n  \"urgency\": \"{{ $json.analysis.urgency }}\",\n  \"content_opportunity\": \"{{ $json.analysis.content_opportunity }}\",\n  \"target_audience\": \"{{ $json.analysis.target_audience }}\",\n  \"url\": \"{{ $json.url }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1664,
+        32
+      ],
+      "id": "4ec3eca5-7030-41a7-a5e5-b937ea59284e",
+      "name": "Save Trend"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=legal+technology",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        112
+      ],
+      "id": "3acfbf8a-69ec-4f57-a479-b7b54b6e3489",
+      "name": "Google news"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=AI+law",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        -48
+      ],
+      "id": "053d30b6-4521-49b1-b60e-69136316f79d",
+      "name": "Google news1"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=GDPR",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        272
+      ],
+      "id": "30fb7898-16a5-4ecb-9c08-eddea1a8669b",
+      "name": "Google news2"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=contract+review+AI",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        432
+      ],
+      "id": "f2a776eb-c04f-44ba-a27b-bd7983dc539d",
+      "name": "Google news3"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=law+firm+automation",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        592
+      ],
+      "id": "f5bdf60a-f3f8-4a13-95d0-4a0efdb22d79",
+      "name": "Google news4"
+    },
+    {
+      "parameters": {
+        "numberInputs": 6
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        512,
+        144
+      ],
+      "id": "e1839c47-d0f0-4647-be81-64cce45e1b24",
+      "name": "Merge1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const seen = new Set();\n\nreturn items.filter(item => {\n  const title = item.json.title;\n\n  if (!title) return false;\n\n  if (seen.has(title)) {\n    return false;\n  }\n\n  seen.add(title);\n  return true;\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        736,
+        208
+      ],
+      "id": "6504b9ee-1a06-4253-9413-27cf3d86e6e8",
+      "name": "code"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        144
+      ],
+      "id": "17507a1c-a6ce-4c51-8c1d-a84e92fb6dd2",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const legalKeywords = [\n  \"law\",\n  \"legal\",\n  \"lawyer\",\n  \"attorney\",\n  \"compliance\",\n  \"gdpr\",\n  \"privacy\",\n  \"contract\",\n  \"regulation\",\n  \"litigation\",\n  \"court\",\n  \"judge\",\n  \"legal tech\",\n  \"legal ai\",\n  \"law firm\",\n  \"employment law\",\n  \"data protection\",\n  \"governance\",\n  \"risk management\"\n];\n\nreturn items.filter(item => {\n  const text = (\n    (item.json.title || \"\") +\n    \" \" +\n    (item.json.Title || \"\") +\n    \" \" +\n    (item.json.summary || \"\") +\n    \" \" +\n    (item.json.contentSnippet || \"\")\n  ).toLowerCase();\n\n  return legalKeywords.some(keyword =>\n    text.includes(keyword.toLowerCase())\n  );\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        16
+      ],
+      "id": "126679d7-826b-4dd0-a311-0429ffc4650c",
+      "name": "Filter law"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1504,
+        32
+      ],
+      "id": "24c6ba42-8e4c-4c62-88d6-b8d336fab331",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4.1-mini\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a B2B legal marketing strategist for LawGPT. Return JSON only.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Company: LawGPT\\n\\nTrend Title: {{$json.title}}\\n\\nSummary: {{$json.summary}}\\n\\nCategory: {{$json.category}}\\n\\nLawGPT Opportunity: {{$json.lawgpt_opportunity}}\\n\\nGenerate:\\n\\n{\\n\\\"marketing_angle\\\":\\\"\\\",\\n\\\"pain_point\\\":\\\"\\\",\\n\\\"lawgpt_solution\\\":\\\"\\\",\\n\\\"target_buyer\\\":\\\"\\\",\\n\\\"cta_direction\\\":\\\"\\\"\\n}\\n\\nReturn valid JSON only.\"\n    }\n  ],\n  \"temperature\": 0.7\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2048,
+        112
+      ],
+      "id": "9a07f06d-394b-4bc2-b398-a531b484f879",
+      "name": "Strategy Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f066c662-8978-4ece-a76a-002914ec5784",
+              "name": "strategy",
+              "value": "={{ JSON.parse($json.choices[0].message.content) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2224,
+        112
+      ],
+      "id": "40028a4f-e0f3-4ec5-a653-021a79f4e113",
+      "name": "Parse Strategy"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_OPENAI_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4.1-mini\",\n  \"response_format\": {\n    \"type\": \"json_object\"\n  },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are an elite LinkedIn ghostwriter for legal technology companies. Write high-quality B2B LinkedIn content for LawGPT. Return ONLY a valid JSON object. No markdown. No code fences. No explanations. No text outside JSON.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Company: LawGPT\\n\\nLawGPT provides AI-powered legal workflow automation for law firms, general counsel, compliance teams, and legal operations.\\n\\nTrend Title: {{$json.title}}\\n\\nTrend Summary: {{$json.summary}}\\n\\nCategory: {{$json.category}}\\n\\nMarketing Angle: {{$json.strategy.marketing_angle}}\\n\\nPain Point: {{$json.strategy.pain_point}}\\n\\nLawGPT Solution: {{$json.strategy.lawgpt_solution}}\\n\\nTarget Buyer: {{$json.strategy.target_buyer}}\\n\\nCTA Direction: {{$json.strategy.cta_direction}}\\n\\nGenerate a LinkedIn post and return JSON with the following fields:\\n\\nhook\\nlinkedin_post\\ncta\\nhashtags\\ninfographic_prompt\\n\\nRequirements:\\n- Human sounding\\n- Strong opinion\\n- Story driven\\n- Practical business value\\n- 200-300 words\\n- Written for legal professionals\\n- Show how LawGPT helps solve the problem\\n- Avoid AI buzzwords\\n- Create engagement\\n\\nhashtags should be a single string.\\n\\ninfographic_prompt should describe a professional LinkedIn infographic that visually explains the trend and how LawGPT helps.\\n\\nReturn valid JSON only.\"\n    }\n  ],\n  \"temperature\": 0.8,\n  \"max_tokens\": 1200\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2640,
+        128
+      ],
+      "id": "7635da37-015d-4cb8-b9a0-fac64351563c",
+      "name": "LinkedIn Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "16c38dfa-8a42-4d5b-8135-72bb097e2425",
+              "name": "hook",
+              "value": "={{ JSON.parse($json.choices[0].message.content).hook }}",
+              "type": "string"
+            },
+            {
+              "id": "1f2a9cdc-f08c-47d4-8b2d-8eed49a0f343",
+              "name": "linkedin_post",
+              "value": "={{ JSON.parse($json.choices[0].message.content).linkedin_post }}",
+              "type": "string"
+            },
+            {
+              "id": "c201136a-8663-4f86-9185-1f4bacb0cd43",
+              "name": "cta",
+              "value": "={{ JSON.parse($json.choices[0].message.content).cta }}",
+              "type": "string"
+            },
+            {
+              "id": "a30f726c-7062-4eb8-9265-e78a35fd672a",
+              "name": "hashtags",
+              "value": "={{ JSON.parse($json.choices[0].message.content).hashtags }}",
+              "type": "string"
+            },
+            {
+              "id": "c4801a71-d90c-46da-8369-9d219789ff57",
+              "name": "infographic_prompt",
+              "value": "={{ JSON.parse($json.choices[0].message.content).infographic_prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "3866e49b-e7f9-48bb-8a1e-f7e4d860c354",
+              "name": "trend_id",
+              "value": "={{ $json.trend_id }}",
+              "type": "string"
+            },
+            {
+              "id": "bac56190-7c8c-429b-a8b5-41fbe13f1901",
+              "name": "trend_title",
+              "value": "={{ $json.trend_title }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2960,
+        128
+      ],
+      "id": "1b851380-b23d-489b-aad4-065986ce09c3",
+      "name": "Parse LinkedIn"
+    },
+    {
+      "parameters": {
+        "tableId": "content_queue",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "trend_id",
+              "fieldValue": "={{ $json.trend_id }}"
+            },
+            {
+              "fieldId": "trend_title",
+              "fieldValue": "={{ $json.trend_title }}"
+            },
+            {
+              "fieldId": "hook",
+              "fieldValue": "={{ $json.hook }}"
+            },
+            {
+              "fieldId": "linkedin_post",
+              "fieldValue": "={{ $json.linkedin_post }}"
+            },
+            {
+              "fieldId": "cta",
+              "fieldValue": "={{ $json.cta }}"
+            },
+            {
+              "fieldId": "hashtags",
+              "fieldValue": "={{ $json.hashtags }}"
+            },
+            {
+              "fieldId": "infographic_prompt",
+              "fieldValue": "={{ $json.infographic_prompt }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "draft"
+            },
+            {
+              "fieldId": "created_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "reviewer_notes",
+              "fieldValue": "\"\""
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        128
+      ],
+      "id": "88395a4c-b999-4563-ad94-3642c30811a5",
+      "name": "Save content_queue",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wULNgVc0P2lcPuMj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const trends = items\n  .filter(item => item.json.trend_score >= 60)\n  .sort((a, b) => b.json.trend_score - a.json.trend_score)\n  .slice(0, 5);\n\nreturn trends;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1840,
+        32
+      ],
+      "id": "f2e3a9da-e4e0-450f-9507-a157b6fe156b",
+      "name": "Select Top 5 Trends"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2416,
+        -224
+      ],
+      "id": "47e01c51-4124-4d16-a7a9-6ee1ad512732",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        2800,
+        -16
+      ],
+      "id": "1e332e48-ffa8-46b6-9cc5-cca061ef6c1f",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1b786e5c-af78-42ef-ba66-fe024c97bf6c",
+              "name": "trend_id",
+              "value": "= {{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "329df210-71ae-4b42-9843-49e817a75153",
+              "name": "trend_title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "83e1a894-28aa-4419-a654-8374ba1e041b",
+              "name": "trend_url",
+              "value": "={{ $json.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2448,
+        128
+      ],
+      "id": "274e887b-19bb-4c06-8700-787f918f0f85",
+      "name": "Prepare LinkedIn Input"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Fetch RSS Feed": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google news1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google news",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google news2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google news3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google news4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Extract Article Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Article Data": {
+      "main": [
+        [
+          {
+            "node": "AI Trend Analysis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Trend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse Trend Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Trend Analysis": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Save Trend": {
+      "main": [
+        [
+          {
+            "node": "Select Top 5 Trends",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google news4": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Google news1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google news": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Filter law",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google news2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Google news3": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch RSS Feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "code": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter law": {
+      "main": [
+        [
+          {
+            "node": "code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Save Trend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strategy Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Strategy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Strategy": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "LinkedIn Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Parse LinkedIn": {
+      "main": [
+        [
+          {
+            "node": "Save content_queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Top 5 Trends": {
+      "main": [
+        [
+          {
+            "node": "Strategy Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Prepare LinkedIn Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "Parse LinkedIn",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare LinkedIn Input": {
+      "main": [
+        [
+          {
+            "node": "LinkedIn Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "availableInMCP": false
+  },
+  "versionId": "5a8a0cc9-c1c6-4aaf-86b6-55361377e051",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e5295ea684ae8030928f4d50a044aec949d076057884ec95962886eb6e0c65e9"
+  },
+  "id": "WTScutMBl1SgwYNg",
+  "tags": []
+}

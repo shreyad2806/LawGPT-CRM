@@ -1,73 +1,52 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card } from "@/components/ui/Card";
-import { getAnalyticsPerformers } from "@/lib/api/analytics";
 
-export function BestPerformers() {
-  const [performers, setPerformers] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+interface FollowupStatusDistributionProps {
+  followupDistribution: any[];
+}
 
-  useEffect(() => {
-    async function loadPerformers() {
-      try {
-        const data = await getAnalyticsPerformers();
-        console.log("PERFORMERS API:", data);
-        setPerformers(data);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load performers");
-      } finally {
-        setLoading(false);
-      }
+export function BestPerformers({ followupDistribution }: FollowupStatusDistributionProps) {
+  if (!followupDistribution || followupDistribution.length === 0) {
+    return (
+      <Card className="p-4">
+        <h3 className="text-white font-semibold mb-4 text-sm">
+          Followup Status Distribution
+        </h3>
+        <div className="text-gray-400 text-xs">No followup data available</div>
+      </Card>
+    );
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "text-yellow-400";
+      case "completed":
+        return "text-green-400";
+      case "overdue":
+        return "text-red-400";
+      default:
+        return "text-gray-400";
     }
-
-    loadPerformers();
-  }, []);
-
-  if (loading) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-white font-semibold mb-4 text-sm">
-          Best Performers
-        </h3>
-        <div className="text-gray-400 text-xs">Loading...</div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-white font-semibold mb-4 text-sm">
-          Best Performers
-        </h3>
-        <div className="text-red-400 text-xs">{error}</div>
-      </Card>
-    );
-  }
-
-  const performersData = performers?.performers || [];
+  };
 
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">
-        Best Performers
+        Followup Status Distribution
       </h3>
-      <div className="space-y-4">
-        {performersData.map((item: any, index: number) => (
-          <div key={index} className={index < performersData.length - 1 ? "border-b border-[#1F2937] pb-4" : ""}>
-            <p className="text-gray-400 text-xs font-semibold uppercase mb-2">
-              {index === 0 ? "Best Hook" : index === 1 ? "Best CTA" : "Best Topic"}
-            </p>
-            <p className="text-white text-sm font-medium mb-2">
-              &ldquo;{item.hook}&rdquo;
-            </p>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400 text-xs">Performance</span>
-              <span className="text-green-400 font-semibold text-sm">{item.engagement}</span>
-            </div>
+      <div className="space-y-3">
+        {followupDistribution.map((item: any, index: number) => (
+          <div
+            key={index}
+            className="flex items-center justify-between"
+          >
+            <span className="text-gray-400 text-xs capitalize">{item.status}</span>
+            <span className={`font-semibold text-sm ${getStatusColor(item.status)}`}>
+              {item.count}
+            </span>
           </div>
         ))}
       </div>

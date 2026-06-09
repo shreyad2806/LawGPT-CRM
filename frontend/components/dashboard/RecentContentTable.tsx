@@ -71,9 +71,22 @@ export function RecentContentTable() {
       <div className="divide-y divide-[#1F2937]">
         {contentData.map((item: any) => (
           <div key={item.id} className="p-4 flex items-center justify-between hover:bg-[#1F2937]/30 transition-colors">
-            <div>
-              <h3 className="text-[13px] font-medium text-white mb-1">{item.hook}</h3>
-              <p className="text-[11px] text-gray-500 font-medium">{item.platform}</p>
+            <div className="flex items-center gap-3">
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt="Infographic"
+                  className="w-12 h-12 rounded object-cover border border-[#1F2937]"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded bg-[#1F2937] flex items-center justify-center border border-[#374151]">
+                  <span className="text-gray-500 text-xs">No image</span>
+                </div>
+              )}
+              <div>
+                <h3 className="text-[13px] font-medium text-white mb-1">{item.hook}</h3>
+                <p className="text-[11px] text-gray-500 font-medium">{item.platform}</p>
+              </div>
             </div>
             <div>
               <StatusDropdown

@@ -3,26 +3,25 @@
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
-import { EngagementTrendChart } from "@/components/analytics/EngagementTrendChart";
 import { TopicPerformanceChart } from "@/components/analytics/TopicPerformanceChart";
 import { LeadGenerationChart } from "@/components/analytics/LeadGenerationChart";
 import { TopHashtags } from "@/components/analytics/TopHashtags";
 import { BestPerformers } from "@/components/analytics/BestPerformers";
 import { StrategyRecommendations } from "@/components/analytics/StrategyRecommendations";
 import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
-import { getAnalyticsEngagement } from "@/lib/api/analytics";
+import { getAnalyticsDashboard } from "@/lib/api/analytics";
 
 export default function AnalyticsPage() {
-  const [engagementData, setEngagementData] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     async function loadAnalytics() {
       try {
-        const data = await getAnalyticsEngagement();
-        console.log("ANALYTICS API:", data);
-        setEngagementData(data);
+        const data = await getAnalyticsDashboard();
+        console.log("ANALYTICS DASHBOARD API:", data);
+        setDashboardData(data);
       } catch (err) {
         console.error(err);
         setError("Failed to load analytics");
@@ -42,54 +41,60 @@ export default function AnalyticsPage() {
     return <ErrorState message={error} />;
   }
 
-  console.log("ANALYTICS API DATA", engagementData);
+  console.log("ANALYTICS DASHBOARD DATA", dashboardData);
 
-  const avgEngagementScore = engagementData?.engagement_rate || 0;
+  const metrics = dashboardData?.metrics || {};
 
   return (
     <div className="flex-1 flex flex-col">
-      <PageHeader title="Analytics" subtitle="Content performance and AI strategy insights" />
+      <PageHeader title="Analytics" subtitle="CRM dashboard and content performance insights" />
       <div className="flex-1 overflow-auto">
         <div className="p-5 space-y-5">
           {/* Stats Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <StatCard
-              title="AVG ENGAGEMENT SCORE"
-              value={avgEngagementScore.toFixed(1)}
-              change="+11%"
-              trend="up"
+              title="TOTAL LEADS"
+              value={metrics.total_leads || 0}
+              description="All leads in CRM"
             />
             <StatCard
-              title="BEST TOPIC"
-              value="AI Contract Review"
-              description="Highest CTR 8.2%"
+              title="QUALIFIED LEADS"
+              value={metrics.qualified_leads || 0}
+              description="Hot and Warm leads"
             />
             <StatCard
-              title="BEST HOOK PATTERN"
-              value="Stat + Consequence"
-              description="11.4 CTR"
+              title="PENDING FOLLOWUPS"
+              value={metrics.pending_followups || 0}
+              description="Awaiting action"
             />
             <StatCard
-              title="BEST CTA"
-              value="Try LawGPT Free"
-              description="9.2% click rate"
+              title="COMPLETED FOLLOWUPS"
+              value={metrics.completed_followups || 0}
+              description="Followups completed"
+            />
+            <StatCard
+              title="AVG LEAD SCORE"
+              value={metrics.average_lead_score?.toFixed(1) || "0.0"}
+              description="Out of 100"
+            />
+            <StatCard
+              title="HIGH PRIORITY LEADS"
+              value={metrics.high_priority_leads || 0}
+              description="Score >= 80 or Hot"
             />
           </div>
 
-          {/* Charts Row 1: Engagement Trend + Top Topics */}
+          {/* Charts Row 2: Lead Score Distribution + Intent Distribution */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <EngagementTrendChart />
-            <TopicPerformanceChart />
+            <TopicPerformanceChart leadScores={dashboardData?.lead_scores || []} />
+            <LeadGenerationChart intentDistribution={dashboardData?.intent_distribution || []} />
           </div>
 
-          {/* Charts Row 2: Lead Generation */}
-          <LeadGenerationChart />
-
-          {/* Bottom Row: Hashtags, Best Performers, Recommendations */}
+          {/* Bottom Row: Top Companies, Followup Status, AI Insight */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <TopHashtags />
-            <BestPerformers />
-            <StrategyRecommendations />
+            <TopHashtags topCompanies={dashboardData?.top_companies || []} />
+            <BestPerformers followupDistribution={dashboardData?.followup_distribution || []} />
+            <StrategyRecommendations insight={dashboardData?.insight || ""} />
           </div>
         </div>
       </div>

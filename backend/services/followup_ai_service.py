@@ -65,6 +65,7 @@ def generate_ai_reply(
     engagement_message: str,
     ai_summary: str,
     intent: str,
+    memory_context: str = "",
 ) -> str:
     """
     Generate an AI reply for the followup.
@@ -101,13 +102,15 @@ AI Summary:
 Intent:
 {intent}
 
+{memory_context}
+
 Guidelines:
 
 - Pricing -> mention customized pricing and offer pricing sheet.
 - Demo Request -> encourage scheduling a demo.
 - Inquiry -> answer politely and ask one qualifying question.
 - Professional and friendly tone.
-- Sign off as "The LawGPT CRM Team".
+- Sign off as "Best, LawGPT Team".
 
 Return ONLY the reply.
 """

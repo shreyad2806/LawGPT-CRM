@@ -46,8 +46,8 @@ export function TopQualifiedLeadsTable() {
   }
 
   const topQualifiedLeads = leads
-    .filter((lead: any) => lead.status.toLowerCase() === "qualified")
-    .sort((a: any, b: any) => b.score - a.score)
+    .filter((lead: any) => lead.status?.toLowerCase() === "qualified")
+    .sort((a: any, b: any) => (b.lead_score || 0) - (a.lead_score || 0))
     .slice(0, 5);
 
   return (
@@ -56,23 +56,38 @@ export function TopQualifiedLeadsTable() {
         <h2 className="text-sm font-semibold text-white">Top Qualified Leads</h2>
         <a href="#" className="text-[11px] font-medium text-[#3B82F6] hover:text-blue-400 transition-colors">View all</a>
       </div>
-      <div className="divide-y divide-[#1F2937]">
-        {topQualifiedLeads.map((lead: any) => (
-          <div key={lead.id} className="p-4 flex items-center justify-between hover:bg-[#1F2937]/30 transition-colors">
-            <div>
-              <h3 className="text-[13px] font-medium text-white mb-1">{lead.name}</h3>
-              <p className="text-[11px] text-gray-500 font-medium">{lead.company}</p>
+      {topQualifiedLeads.length === 0 ? (
+        <div className="p-8 text-center">
+          <p className="text-sm text-gray-500">No qualified leads yet</p>
+        </div>
+      ) : (
+        <div className="divide-y divide-[#1F2937]">
+          {topQualifiedLeads.map((lead: any) => (
+            <div key={lead.id} className="p-4 flex items-center justify-between hover:bg-[#1F2937]/30 transition-colors">
+              <div>
+                <h3 className="text-[13px] font-medium text-white mb-1">{lead.name}</h3>
+                <p className="text-[11px] text-gray-500 font-medium">{lead.company}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                  lead.priority === "Hot" ? "text-[#EF4444] bg-red-500/10" :
+                  lead.priority === "Warm" ? "text-[#F59E0B] bg-amber-500/10" :
+                  "text-[#3B82F6] bg-blue-500/10"
+                }`}>
+                  {lead.priority || "Cold"}
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                  lead.lead_score >= 90 ? "text-[#22C55E] bg-green-500/10" :
+                  lead.lead_score >= 80 ? "text-[#F59E0B] bg-amber-500/10" :
+                  "text-[#3B82F6] bg-blue-500/10"
+                }`}>
+                  Score: {lead.lead_score}
+                </span>
+              </div>
             </div>
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-              lead.score >= 90 ? "text-[#22C55E] bg-green-500/10" :
-              lead.score >= 80 ? "text-[#F59E0B] bg-amber-500/10" :
-              "text-[#3B82F6] bg-blue-500/10"
-            }`}>
-              Score: {lead.score}
-            </span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }

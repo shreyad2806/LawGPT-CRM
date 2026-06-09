@@ -1,65 +1,10 @@
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
 
 from services.supabase_client import supabase, safe_insert
 
 
-def get_conversation_memory(lead_id: int) -> List[Dict[str, Any]]:
-    """
-    Get conversation history for a lead.
-    """
-
-    try:
-        response = (
-            supabase.table("conversation_memory")
-            .select("*")
-            .eq("lead_id", lead_id)
-            .order("timestamp")
-            .execute()
-        )
-
-        return cast(List[Dict[str, Any]], response.data or [])
-
-    except Exception as e:
-        print(f"[sdr_memory] Error fetching conversation memory: {e}")
-        return []
-
-
-def log_conversation(
-    lead_id: int,
-    sender: str,
-    message: str,
-    msg_type: str,
-    followup_id: Optional[int] = None,
-) -> Dict[str, Any]:
-    """
-    Save one conversation message.
-    """
-
-    try:
-
-        payload: Dict[str, Any] = {
-            "lead_id": lead_id,
-            "sender": sender,
-            "message": message,
-            "type": msg_type,
-        }
-
-        if followup_id is not None:
-            payload["followup_id"] = followup_id
-
-        response = safe_insert(
-            "conversation_memory",
-            payload,
-        )
-
-        if response.data:
-            return cast(Dict[str, Any], response.data[0])
-
-        return {}
-
-    except Exception as e:
-        print(f"[sdr_memory] Error logging conversation: {e}")
-        return {}
+# Conversation memory functions moved to memory_service.py
+# This file now only contains workflow and CRM learning functions
 
 
 def log_workflow_run(

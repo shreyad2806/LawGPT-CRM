@@ -1,15 +1,29 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 from routers import dashboard, content, leads, followups, analytics
 from routers import trends
 from routers import infographic
 from routers import engagement_logs
 from routers import notifications
+from routers import memory
+
+# Create uploads directories
+os.makedirs("uploads", exist_ok=True)
+os.makedirs("uploads/infographics", exist_ok=True)
 
 app = FastAPI(
     title="LawGPT CRM API",
     description="API for LawGPT CRM - AI-powered legal CRM system",
     version="1.0.0"
+)
+
+# Mount static files for uploads directory
+app.mount(
+    "/uploads",
+    StaticFiles(directory="uploads"),
+    name="uploads"
 )
 
 # CORS configuration
@@ -36,6 +50,7 @@ app.include_router(trends.router, prefix="/api/trends", tags=["trends"])
 app.include_router(infographic.router, prefix="/api/infographic", tags=["infographic"])
 app.include_router(engagement_logs.router, prefix="/api/engagement-logs", tags=["engagement-logs"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
+app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 
 if __name__ == "__main__":
     import uvicorn

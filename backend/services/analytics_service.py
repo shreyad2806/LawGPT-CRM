@@ -426,3 +426,262 @@ def get_engagement_trends(limit: int = 30) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"Error fetching engagement trends: {e}")
         raise
+
+
+def get_crm_dashboard() -> Dict[str, Any]:
+    """Get comprehensive CRM dashboard analytics from leads, followups, and engagement logs."""
+    try:
+        print("[analytics_service] get_crm_dashboard: Starting CRM dashboard analytics")
+
+        # Fetch data from Supabase
+        print("[analytics_service] get_crm_dashboard: Fetching leads from Supabase")
+        leads_response = supabase.table("leads").select("*").execute()
+        leads = cast(List[Dict[str, Any]], leads_response.data or [])
+        print(f"[analytics_service] get_crm_dashboard: Fetched {len(leads)} leads")
+
+        print("[analytics_service] get_crm_dashboard: Fetching lead_followups from Supabase")
+        followups_response = supabase.table("lead_followups").select("*").execute()
+        followups = cast(List[Dict[str, Any]], followups_response.data or [])
+        print(f"[analytics_service] get_crm_dashboard: Fetched {len(followups)} followups")
+
+        print("[analytics_service] get_crm_dashboard: Fetching engagement_logs from Supabase")
+        engagement_logs_response = supabase.table("engagement_logs").select("*").execute()
+        engagement_logs = cast(List[Dict[str, Any]], engagement_logs_response.data or [])
+        print(f"[analytics_service] get_crm_dashboard: Fetched {len(engagement_logs)} engagement logs")
+
+        # =====================================
+        # METRICS
+        # =====================================
+        print("[analytics_service] get_crm_dashboard: Calculating metrics")
+
+        total_leads = len(leads)
+
+        # Qualified leads: lead_quality in ["Hot", "Warm"] or lead_score >= 60
+        qualified_leads = 0
+        for lead in leads:
+            if not isinstance(lead, dict):
+                continue
+            lead_quality = lead.get("lead_quality", "")
+            lead_score = int(lead.get("lead_score") or 0)
+            if lead_quality in ["Hot", "Warm"] or lead_score >= 60:
+                qualified_leads += 1
+
+        # Followup counts
+        pending_followups = 0
+        completed_followups = 0
+        for followup in followups:
+            if not isinstance(followup, dict):
+                continue
+            status = followup.get("status", "")
+            if status == "Pending":
+                pending_followups += 1
+            elif status == "Completed":
+                completed_followups += 1
+
+        # Average lead score
+        lead_scores = []
+        for lead in leads:
+            if not isinstance(lead, dict):
+                continue
+            score = int(lead.get("lead_score") or 0)
+            if score > 0:
+                lead_scores.append(score)
+        average_lead_score = round(sum(lead_scores) / len(lead_scores), 2) if lead_scores else 0
+
+        # High priority leads: priority = "Hot" or lead_score >= 80
+        high_priority_leads = 0
+        for lead in leads:
+            if not isinstance(lead, dict):
+                continue
+            priority = lead.get("priority", "")
+            lead_score = int(lead.get("lead_score") or 0)
+            if priority == "Hot" or lead_score >= 80:
+                high_priority_leads += 1
+
+        print(f"[analytics_service] get_crm_dashboard: Metrics - total_leads={total_leads}, qualified_leads={qualified_leads}, pending_followups={pending_followups}, completed_followups={completed_followups}, avg_score={average_lead_score}, high_priority={high_priority_leads}")
+
+        # =====================================
+        # LEAD SCORE DISTRIBUTION
+        # =====================================
+        print("[analytics_service] get_crm_dashboard: Calculating lead score distribution")
+
+        score_buckets = {
+            "0-20": 0,
+            "21-40": 0,
+            "41-60": 0,
+            "61-80": 0,
+            "81-100": 0
+        }
+
+        for lead in leads:
+            if not isinstance(lead, dict):
+                continue
+            score = int(lead.get("lead_score") or 0)
+            if score <= 20:
+                score_buckets["0-20"] += 1
+            elif score <= 40:
+                score_buckets["21-40"] += 1
+            elif score <= 60:
+                score_buckets["41-60"] += 1
+            elif score <= 80:
+                score_buckets["61-80"] += 1
+            else:
+                score_buckets["81-100"] += 1
+
+        lead_scores_distribution = [
+            {"range": "0-20", "count": score_buckets["0-20"]},
+            {"range": "21-40", "count": score_buckets["21-40"]},
+            {"range": "41-60", "count": score_buckets["41-60"]},
+            {"range": "61-80", "count": score_buckets["61-80"]},
+            {"range": "81-100", "count": score_buckets["81-100"]}
+        ]
+
+        print(f"[analytics_service] get_crm_dashboard: Lead score distribution: {lead_scores_distribution}")
+
+        # =====================================
+        # INTENT DISTRIBUTION
+        # =====================================
+        print("[analytics_service] get_crm_dashboard: Calculating intent distribution")
+
+        intent_counts: Dict[str, int] = {}
+        for lead in leads:
+            if not isinstance(lead, dict):
+                continue
+            intent = lead.get("intent") or "General Inquiry"
+            intent_counts[intent] = intent_counts.get(intent, 0) + 1
+
+        intent_distribution = [
+            {"intent": intent, "count": count}
+            for intent, count in sorted(intent_counts.items(), key=lambda x: x[1], reverse=True)
+        ]
+
+        print(f"[analytics_service] get_crm_dashboard: Intent distribution: {intent_distribution}")
+
+        # =====================================
+        # FOLLOWUP STATUS DISTRIBUTION
+        # =====================================
+        print("[analytics_service] get_crm_dashboard: Calculating followup status distribution")
+
+        followup_status_counts: Dict[str, int] = {}
+        for followup in followups:
+            if not isinstance(followup, dict):
+                continue
+            status = followup.get("status") or "Unknown"
+            followup_status_counts[status] = followup_status_counts.get(status, 0) + 1
+
+        followup_distribution = [
+            {"status": status, "count": count}
+            for status, count in sorted(followup_status_counts.items(), key=lambda x: x[1], reverse=True)
+        ]
+
+        print(f"[analytics_service] get_crm_dashboard: Followup distribution: {followup_distribution}")
+
+        # =====================================
+        # WEEKLY LEAD TREND
+        # =====================================
+        print("[analytics_service] get_crm_dashboard: Calculating weekly lead trend")
+
+        from datetime import datetime, timedelta
+
+        # Group leads by week (last 8 weeks)
+        weekly_counts: Dict[str, int] = {}
+        today = datetime.utcnow()
+
+        for lead in leads:
+            if not isinstance(lead, dict):
+                continue
+            created_at = lead.get("created_at")
+            if not created_at:
+                continue
+
+            try:
+                lead_date = datetime.fromisoformat(str(created_at).replace('Z', '+00:00'))
+                # Calculate week start (Monday)
+                week_start = lead_date - timedelta(days=lead_date.weekday())
+                week_key = week_start.strftime("%Y-%m-%d")
+                weekly_counts[week_key] = weekly_counts.get(week_key, 0) + 1
+            except Exception as e:
+                print(f"[analytics_service] get_crm_dashboard: Error parsing date for lead: {e}")
+                continue
+
+        # Sort weeks and get last 8
+        weekly_trend = [
+            {"week": week, "count": count}
+            for week, count in sorted(weekly_counts.items())[-8:]
+        ]
+
+        print(f"[analytics_service] get_crm_dashboard: Weekly trend: {weekly_trend}")
+
+        # =====================================
+        # TOP COMPANIES
+        # =====================================
+        print("[analytics_service] get_crm_dashboard: Calculating top companies")
+
+        company_counts: Dict[str, int] = {}
+        for lead in leads:
+            if not isinstance(lead, dict):
+                continue
+            company = lead.get("company") or "Unknown"
+            if company and company != "Unknown":
+                company_counts[company] = company_counts.get(company, 0) + 1
+
+        top_companies = [
+            {"company": company, "count": count}
+            for company, count in sorted(company_counts.items(), key=lambda x: x[1], reverse=True)[:10]
+        ]
+
+        print(f"[analytics_service] get_crm_dashboard: Top companies: {top_companies}")
+
+        # =====================================
+        # AI INSIGHT
+        # =====================================
+        print("[analytics_service] get_crm_dashboard: Generating AI insight")
+
+        insight = ""
+        if engagement_logs:
+            # Get recent AI summaries from engagement logs
+            recent_summaries = []
+            for log in engagement_logs[:5]:
+                if not isinstance(log, dict):
+                    continue
+                ai_summary = log.get("ai_summary")
+                if ai_summary:
+                    recent_summaries.append(ai_summary)
+
+            if recent_summaries:
+                insight = f"Recent engagement insights: {recent_summaries[0]}"
+            else:
+                insight = "No AI insights available from recent engagements."
+        else:
+            insight = "No engagement data available for AI insights."
+
+        print(f"[analytics_service] get_crm_dashboard: Insight: {insight}")
+
+        # =====================================
+        # RETURN DASHBOARD DATA
+        # =====================================
+        dashboard_data = {
+            "metrics": {
+                "total_leads": total_leads,
+                "qualified_leads": qualified_leads,
+                "pending_followups": pending_followups,
+                "completed_followups": completed_followups,
+                "average_lead_score": average_lead_score,
+                "high_priority_leads": high_priority_leads
+            },
+            "lead_scores": lead_scores_distribution,
+            "intent_distribution": intent_distribution,
+            "followup_distribution": followup_distribution,
+            "weekly_trend": weekly_trend,
+            "top_companies": top_companies,
+            "insight": insight
+        }
+
+        print("[analytics_service] get_crm_dashboard: Dashboard data compiled successfully")
+        return dashboard_data
+
+    except Exception as e:
+        print(f"[analytics_service] get_crm_dashboard: Error generating CRM dashboard: {e}")
+        import traceback
+        traceback.print_exc()
+        raise

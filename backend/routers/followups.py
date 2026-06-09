@@ -5,10 +5,18 @@ from pydantic import BaseModel
 from datetime import datetime
 from services.followup_service import get_followups, get_followup, save_followup, update_followup, delete_followup
 from services.followup_ai_service import generate_ai_reply, generate_ai_recommendation, generate_coaching_panel
-from services.sdr_memory_service import get_conversation_memory, learn_successful_pattern
+from services.sdr_memory_service import learn_successful_pattern
+from services.memory_service import (
+    get_lead_memory,
+    get_conversation_history,
+    store_conversation,
+    extract_memory,
+    update_lead_memory_summary,
+    store_memory_event
+)
 from services.lead_activity_service import (
-    log_followup_status_updated, 
-    log_reply_generated, 
+    log_followup_status_updated,
+    log_reply_generated,
     log_recommendation_generated,
     log_followup_completed
 )
@@ -197,15 +205,100 @@ async def generate_reply(id: int):
         else ""
     )
 
+    # Load lead memory summary
+    lead_memory = get_lead_memory(followup["lead_id"])
+
+    # Load last 5 conversation messages
+    history = get_conversation_history(followup["lead_id"], limit=5)
+
+    # Build history text
+    history_text = "\n".join(
+        f"{x['sender']}: {x['message']}"
+        for x in history
+    )
+
+    # Build memory context
+    memory_context = f'''
+
+Lead Memory
+
+Pain Point:
+{lead_memory.get("pain_point", "Unknown")}
+
+Budget:
+{lead_memory.get("budget", "Unknown")}
+
+Decision Maker:
+{lead_memory.get("decision_maker", "Unknown")}
+
+Buying Intent:
+{lead_memory.get("buying_intent", "Unknown")}
+
+Urgency:
+{lead_memory.get("urgency", "Unknown")}
+
+Previous Conversation
+
+{history_text}
+
+Current Message
+
+{engagement_message}
+
+Generate the best SDR response.
+'''
+
+    # Generate reply with memory context
     generated_reply = generate_ai_reply(
         lead=lead,
         engagement_message=engagement_message,
         ai_summary=lead.get("reason", ""),
-        intent=lead.get("intent", "")
+        intent=lead.get("intent", ""),
+        memory_context=memory_context
     )
 
     print("========== GENERATED REPLY ==========")
     print(generated_reply)
+
+    print("========== BEFORE MEMORY SAVE ==========")
+    print("lead_id:", followup["lead_id"])
+    print("engagement_message:", engagement_message)
+    print("generated_reply:", generated_reply[:100])
+
+    # Store user message
+    user_result = store_conversation(
+        followup["lead_id"],
+        "user",
+        engagement_message
+    )
+
+    print("USER RESULT")
+    print(user_result)
+
+    # Store assistant reply
+    assistant_result = store_conversation(
+        followup["lead_id"],
+        "assistant",
+        generated_reply
+    )
+
+    print("ASSISTANT RESULT")
+    print(assistant_result)
+
+    # Update memory summary
+    conversation_text = history_text + "\n" + generated_reply
+    memory = extract_memory(conversation_text)
+    if memory:
+        update_lead_memory_summary(followup["lead_id"], memory)
+
+        # Store memory events
+        for key, value in memory.items():
+            if value:
+                store_memory_event(
+                    followup["lead_id"],
+                    key,
+                    str(value)
+                )
 
     update_followup(
         id,
@@ -306,7 +399,7 @@ async def get_coaching_panel(id: int) -> Dict[str, Any]:
 
         lead_id = int(lead_id)
 
-        memory_records = get_conversation_memory(lead_id)
+        memory_records = get_conversation_history(lead_id)
         history_text = "\n".join(
             f"{m.get('sender')}: {m.get('message')}"
             for m in memory_records

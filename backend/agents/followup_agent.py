@@ -24,7 +24,7 @@ We're building LawGPT for Indian legal professionals.
 
 Would love to connect and learn more about your workflow.
 
-Regards,
+Best,
 LawGPT Team
 """.strip()
 

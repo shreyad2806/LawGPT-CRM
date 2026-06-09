@@ -9,8 +9,9 @@ import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
 import { Button } from "@/components/ui/Button";
 import StatusDropdown from "@/components/content/status-dropdown";
 import { Select } from "@/components/ui/Select";
-import { getContent, generateInfographic, updateContent } from "@/lib/api/content";
+import { getContent, generateInfographic, regenerateInfographic, updateContent } from "@/lib/api/content";
 import ContentReviewModal from "@/components/content/ContentReviewModal";
+import InfographicViewerModal from "@/components/content/InfographicViewerModal";
 
 type ContentItem = {
   id: string;
@@ -21,7 +22,7 @@ type ContentItem = {
   cta: string;
   hashtags: string[];
   infographic_prompt: string;
-  infographic_url?: string;
+  image_url?: string;
   status: string;
   created_at: string;
 };
@@ -82,6 +83,8 @@ export default function ContentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [generatingInfographic, setGeneratingInfographic] = useState<string | null>(null);
+  const [viewingInfographic, setViewingInfographic] = useState<ContentItem | null>(null);
+  const [isInfographicModalOpen, setIsInfographicModalOpen] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
 
@@ -91,21 +94,87 @@ export default function ContentPage() {
   };
 
   const handleGenerateInfographic = async (contentId: string) => {
+    console.log("[INFOGRAPHIC] Generate clicked");
     setGeneratingInfographic(contentId);
     try {
       const response = await generateInfographic(contentId);
+      console.log("[INFOGRAPHIC] Response:", response);
+      
+      if (response.cached) {
+        console.log("[INFOGRAPHIC] Cache hit");
+      } else {
+        console.log("[INFOGRAPHIC] Cache miss - OpenAI generation started");
+      }
+      
       // Refresh content after generation
       const data = await getContent();
       setContent(data.content || []);
-      // Show success toast
-      showToast("Infographic generated successfully!");
-      // Do not open modal; infographic available inline in table
+      
+      // Find the updated content item
+      const updatedContent = data.content?.find((item: ContentItem) => item.id === contentId);
+      
+      if (updatedContent) {
+        console.log("[INFOGRAPHIC] Image saved");
+        console.log("[INFOGRAPHIC] URL stored:", updatedContent.image_url);
+        console.log("[INFOGRAPHIC] Returning image");
+        
+        // Open infographic viewer modal
+        setViewingInfographic(updatedContent);
+        setIsInfographicModalOpen(true);
+      }
     } catch (err) {
-      console.error("Failed to generate infographic:", err);
+      console.error("[INFOGRAPHIC] Failed to generate infographic:", err);
       showToast("Failed to generate infographic");
     } finally {
       setGeneratingInfographic(null);
     }
+  };
+
+  const handleRegenerateInfographic = async (contentId: string) => {
+    console.log("[INFOGRAPHIC] Regenerate clicked");
+    setGeneratingInfographic(contentId);
+    try {
+      const response = await regenerateInfographic(contentId);
+      console.log("[INFOGRAPHIC] Regenerate response:", response);
+      
+      // Refresh content after regeneration
+      const data = await getContent();
+      setContent(data.content || []);
+      
+      // Find the updated content item
+      const updatedContent = data.content?.find((item: ContentItem) => item.id === contentId);
+      
+      if (updatedContent) {
+        console.log("[INFOGRAPHIC] Image regenerated");
+        console.log("[INFOGRAPHIC] New URL stored:", updatedContent.image_url);
+        
+        // Update the modal with the new image
+        setViewingInfographic(updatedContent);
+      }
+      
+      showToast("Infographic regenerated successfully!");
+    } catch (err) {
+      console.error("[INFOGRAPHIC] Failed to regenerate infographic:", err);
+      showToast("Failed to regenerate infographic");
+    } finally {
+      setGeneratingInfographic(null);
+    }
+  };
+
+  const handleDownloadInfographic = (content: ContentItem) => {
+    if (!content.image_url) return;
+    
+    console.log("[INFOGRAPHIC] Download clicked for:", content.id);
+    
+    // Create a temporary link to download the image
+    const link = document.createElement('a');
+    link.href = content.image_url;
+    link.download = `lawgpt_infographic_${content.id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log("[INFOGRAPHIC] Download initiated");
   };
 
   const handleStatusChange = async (
@@ -226,34 +295,21 @@ export default function ContentPage() {
   },
   },
     {
-      key: "infographic_url",
+      key: "image_url",
       header: "Infographic",
       render: (value, row) => (
         <div>
-          {value ? (
-            <div className="flex items-center gap-2">
-              <a href={value} download>
-                <Button variant="ghost" size="sm">Download</Button>
-              </a>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => handleGenerateInfographic(row.id)}
-                disabled={generatingInfographic === row.id}
-              >
-                {generatingInfographic === row.id ? "Generating..." : "Regenerate"}
-              </Button>
-            </div>
-          ) : (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleGenerateInfographic(row.id)}
-              disabled={generatingInfographic === row.id}
-            >
-              {generatingInfographic === row.id ? "Generating..." : "Generate"}
-            </Button>
-          )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation();
+              handleGenerateInfographic(row.id);
+            }}
+            disabled={generatingInfographic === row.id}
+          >
+            {generatingInfographic === row.id ? "Generating..." : "Generate"}
+          </Button>
         </div>
       ),
     },
@@ -355,7 +411,18 @@ export default function ContentPage() {
                     open={isModalOpen}
                     onClose={() => setIsModalOpen(false)}
                     content={selectedContent}
+                    onToast={showToast}
                   />
+
+          {/* Infographic Viewer Modal */}
+          <InfographicViewerModal
+            open={isInfographicModalOpen}
+            onClose={() => setIsInfographicModalOpen(false)}
+            content={viewingInfographic}
+            onDownload={() => viewingInfographic && handleDownloadInfographic(viewingInfographic)}
+            onRegenerate={() => viewingInfographic && handleRegenerateInfographic(viewingInfographic.id)}
+            isRegenerating={generatingInfographic === viewingInfographic?.id}
+          />
 
           {/* Preview drawer and modals removed; use inline table and dropdowns only */}
 

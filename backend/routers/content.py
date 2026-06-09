@@ -77,7 +77,7 @@ async def get_all_content() -> Dict[str, Any]:
             "cta": cta,
             "hashtags": hashtags,
             "infographic_prompt": infographic_prompt,
-            "infographic_url": item.get("infographic_url"),
+            "image_url": item.get("infographic_url") or item.get("image_url"),
             "status": item.get("status", "Draft"),
             "created_at": item.get("created_at", "") if item.get("created_at") else ""
         }
@@ -158,7 +158,7 @@ async def patch_content(content_id: int, updates: Dict[str, Any]) -> Dict[str, A
             "cta": updated.get("cta", ""),
             "hashtags": payload.get("hashtags", []),
             "infographic_prompt": payload.get("infographic_prompt", ""),
-            "infographic_url": updated.get("infographic_url"),
+            "image_url": updated.get("infographic_url") or updated.get("image_url"),
             "status": updated.get("status", ""),
             "created_at": updated.get("created_at", "") if updated.get("created_at") else ""
         }
@@ -171,26 +171,88 @@ async def patch_content(content_id: int, updates: Dict[str, Any]) -> Dict[str, A
 
 @router.post("/{content_id}/generate-infographic")
 async def generate_infographic_for_content_route(content_id: int) -> Dict[str, Any]:
-    """Backward-compatible endpoint under /api/content/{id}/generate-infographic"""
+    """Generate infographic for content with caching"""
     try:
         print(f"[routers.content] generate-infographic called id={content_id}")
         try:
-            url = generate_infographic_for_content(content_id)
-        except ValueError:
-            raise HTTPException(status_code=404, detail="Content not found")
+            result = generate_infographic_for_content(content_id, force=False)
+        except ValueError as ve:
+            print(f"[routers.content] ValueError: {ve}")
+            import traceback
+            return {
+                "error": str(ve),
+                "traceback": traceback.format_exc()
+            }
         except EnvironmentError as ee:
             print(f"[routers.content] env error: {ee}")
-            raise HTTPException(status_code=500, detail=str(ee))
+            import traceback
+            return {
+                "error": str(ee),
+                "traceback": traceback.format_exc()
+            }
         except Exception as e:
             print(f"[routers.content] generation error: {e}")
-            raise HTTPException(status_code=500, detail="Failed to generate infographic")
+            import traceback
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
 
-        return {"infographic_url": url}
-    except HTTPException:
-        raise
+        # Ensure response format matches frontend expectations
+        return {
+            "image_url": result.get("infographic_url"),
+            "cached": result.get("cached", False)
+        }
     except Exception as e:
         print(f"[routers.content] unexpected error: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
+
+@router.post("/{content_id}/regenerate-infographic")
+async def regenerate_infographic_for_content_route(content_id: int) -> Dict[str, Any]:
+    """Force regenerate infographic for content"""
+    try:
+        print(f"[routers.content] regenerate-infographic called id={content_id}")
+        try:
+            result = generate_infographic_for_content(content_id, force=True)
+        except ValueError as ve:
+            print(f"[routers.content] ValueError: {ve}")
+            import traceback
+            return {
+                "error": str(ve),
+                "traceback": traceback.format_exc()
+            }
+        except EnvironmentError as ee:
+            print(f"[routers.content] env error: {ee}")
+            import traceback
+            return {
+                "error": str(ee),
+                "traceback": traceback.format_exc()
+            }
+        except Exception as e:
+            print(f"[routers.content] generation error: {e}")
+            import traceback
+            return {
+                "error": str(e),
+                "traceback": traceback.format_exc()
+            }
+
+        # Ensure response format matches frontend expectations
+        return {
+            "image_url": result.get("infographic_url"),
+            "cached": result.get("cached", False)
+        }
+    except Exception as e:
+        print(f"[routers.content] unexpected error: {e}")
+        import traceback
+        return {
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
 
 @router.get("/stats")
 async def get_content_stats() -> Dict[str, Any]:

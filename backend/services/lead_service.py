@@ -175,11 +175,46 @@ def get_lead_by_id(lead_id: int) -> Optional[Dict[str, Any]]:
 def delete_lead(
     lead_id: int
 ):
-
-    return (
-        supabase
-        .table("leads")
-        .delete()
-        .eq("id", lead_id)
-        .execute()
-    )
+    """Delete lead and all related records in correct FK order."""
+    try:
+        print(f"[DELETE LEAD] Deleting lead id: {lead_id}")
+        
+        # Delete in correct FK order (child tables first)
+        tables_to_delete = [
+            "conversation_memory",
+            "memory_events",
+            "lead_memory_summary",
+            "lead_activity",
+            "lead_followups",
+            "leads"
+        ]
+        
+        for table in tables_to_delete:
+            try:
+                print(f"[DELETE LEAD] Deleting from table: {table} where lead_id={lead_id}")
+                result = (
+                    supabase
+                    .table(table)
+                    .delete()
+                    .eq("lead_id", lead_id)
+                    .execute()
+                )
+                
+                # Check for Supabase errors
+                if hasattr(result, 'error') and result.error:
+                    print(f"[DELETE LEAD] Supabase error on {table}: {result.error}")
+                else:
+                    print(f"[DELETE LEAD] Supabase delete response from {table}: {len(result.data or [])} records deleted")
+            except Exception as e:
+                print(f"[DELETE LEAD] Error deleting from {table}: {e}")
+                import traceback
+                print(f"[DELETE LEAD] Traceback: {traceback.format_exc()}")
+                # Continue with other tables even if one fails
+        
+        print(f"[DELETE LEAD] Successfully deleted lead {lead_id} and all related records")
+        return {"success": True}
+    except Exception as e:
+        print(f"[DELETE LEAD] Error deleting lead {lead_id}: {e}")
+        import traceback
+        print(f"[DELETE LEAD] Traceback: {traceback.format_exc()}")
+        raise

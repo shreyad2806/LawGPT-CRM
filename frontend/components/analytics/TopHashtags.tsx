@@ -1,68 +1,42 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card } from "@/components/ui/Card";
-import { getAnalyticsHashtags } from "@/lib/api/analytics";
 
-export function TopHashtags() {
-  const [hashtags, setHashtags] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+interface TopCompaniesProps {
+  topCompanies: any[];
+}
 
-  useEffect(() => {
-    async function loadHashtags() {
-      try {
-        const data = await getAnalyticsHashtags();
-        console.log("HASHTAGS API:", data);
-        setHashtags(data);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load hashtags");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadHashtags();
-  }, []);
-
-  if (loading) {
+export function TopHashtags({ topCompanies }: TopCompaniesProps) {
+  if (!topCompanies || topCompanies.length === 0) {
     return (
       <Card className="p-4">
         <h3 className="text-white font-semibold mb-4 text-sm">
-          Top Hashtags
+          Top Companies
         </h3>
-        <div className="text-gray-400 text-xs">Loading...</div>
+        <div className="text-gray-400 text-xs">No company data available</div>
       </Card>
     );
   }
-
-  if (error) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-white font-semibold mb-4 text-sm">
-          Top Hashtags
-        </h3>
-        <div className="text-red-400 text-xs">{error}</div>
-      </Card>
-    );
-  }
-
-  const hashtagsData = hashtags?.hashtags || [];
 
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">
-        Top Hashtags
+        Top Companies
       </h3>
-      <div className="flex flex-wrap gap-2">
-        {hashtagsData.map((item: any) => (
-          <span
-            key={item.tag}
-            className="px-3 py-1 bg-[#1F2937] text-blue-400 rounded-full text-xs font-medium hover:bg-[#2D3748] transition-colors cursor-pointer"
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-gray-400 border-b border-[#1F2937] pb-2">
+          <div>Company</div>
+          <div className="text-right">Lead Count</div>
+        </div>
+        {topCompanies.map((item: any, index: number) => (
+          <div
+            key={index}
+            className="grid grid-cols-2 gap-2 text-xs"
           >
-            {item.tag}
-          </span>
+            <div className="text-white truncate">{item.company}</div>
+            <div className="text-green-400 text-right font-medium">{item.count}</div>
+          </div>
         ))}
       </div>
     </Card>

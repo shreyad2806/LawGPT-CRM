@@ -9,7 +9,8 @@ from services.analytics_service import (
     calculate_engagement_score,
     get_topic_scores,
     get_analytics_recommendations,
-    get_engagement_trends
+    get_engagement_trends,
+    get_crm_dashboard
 )
 
 router = APIRouter()
@@ -117,3 +118,15 @@ async def get_recommendations() -> List[Dict[str, Any]]:
         return recommendations
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch recommendations: {str(e)}")
+
+@router.get("/dashboard")
+async def get_dashboard() -> Dict[str, Any]:
+    """Get comprehensive CRM dashboard analytics"""
+    try:
+        print("[routers/analytics] GET /api/analytics/dashboard called")
+        dashboard_data = get_crm_dashboard()
+        print("[routers/analytics] Dashboard data retrieved successfully")
+        return dashboard_data
+    except Exception as e:
+        print(f"[routers/analytics] Error fetching dashboard: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch dashboard: {str(e)}")

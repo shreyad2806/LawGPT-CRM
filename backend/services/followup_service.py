@@ -278,7 +278,7 @@ def create_followup_from_lead(
                 "Reply within 24 hours",
 
             "generated_reply":
-                f"Hi {lead.get('name')}, thanks for reaching out to LawGPT. We'd love to schedule a demo.",
+                f"Hi {lead.get('name')}, thanks for reaching out to LawGPT. We'd love to schedule a demo.\n\nBest,\nLawGPT Team",
 
             "due_date":
                 (datetime.utcnow() + timedelta(days=1)).isoformat()

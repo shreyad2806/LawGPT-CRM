@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Drawer } from "../shared/Drawer";
 import { Followup, generateReply, completeFollowup, updateFollowup, getCoachingPanel, CoachingResponse } from "@/lib/api/followups";
+import { getLeadMemory, LeadMemoryResponse } from "@/lib/api/memory";
 
 interface FollowupDrawerProps {
   followup: Followup | null;
@@ -18,6 +19,9 @@ export function FollowupDrawer({ followup, isOpen, onClose, onRefresh }: Followu
   
   const [coachingData, setCoachingData] = useState<CoachingResponse | null>(null);
   const [isLoadingCoaching, setIsLoadingCoaching] = useState(false);
+  
+  const [leadMemory, setLeadMemory] = useState<LeadMemoryResponse | null>(null);
+  const [isLoadingMemory, setIsLoadingMemory] = useState(false);
 
   useEffect(() => {
 
@@ -50,9 +54,24 @@ export function FollowupDrawer({ followup, isOpen, onClose, onRefresh }: Followu
         }
       };
       
+      // Fetch Lead Memory
+      const fetchMemory = async () => {
+        setIsLoadingMemory(true);
+        try {
+          const data = await getLeadMemory(Number(followup.lead_id));
+          setLeadMemory(data);
+        } catch (error) {
+          console.error("Failed to load memory data", error);
+        } finally {
+          setIsLoadingMemory(false);
+        }
+      };
+      
       fetchCoaching();
+      fetchMemory();
     } else {
       setCoachingData(null);
+      setLeadMemory(null);
     }
   }, [followup, isOpen]);
 
@@ -134,6 +153,89 @@ export function FollowupDrawer({ followup, isOpen, onClose, onRefresh }: Followu
             }`}>
               {followup.priority} Priority
             </div>
+          </div>
+        </div>
+
+        {/* Lead Intelligence */}
+        <div>
+          <h4 className="text-sm font-semibold text-white mb-2 flex items-center gap-2">
+            <svg className="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+            </svg>
+            Lead Intelligence
+          </h4>
+          
+          <div className="bg-blue-500/5 border border-blue-500/20 p-4 rounded-xl space-y-3">
+            {isLoadingMemory ? (
+              <div className="text-sm text-gray-400 animate-pulse">Loading intelligence...</div>
+            ) : leadMemory?.summary ? (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="block text-xs text-blue-400/70 uppercase">Buying Intent</span>
+                    <span className="text-sm text-white">{leadMemory.summary.buying_intent || "Unknown"}</span>
+                  </div>
+                  <div>
+                    <span className="block text-xs text-blue-400/70 uppercase">Urgency</span>
+                    <span className="text-sm text-white">{leadMemory.summary.urgency || "Unknown"}</span>
+                  </div>
+                </div>
+                
+                {leadMemory.summary.pain_point && (
+                  <div>
+                    <span className="block text-xs text-blue-400/70 uppercase mb-1">Pain Point</span>
+                    <p className="text-sm text-gray-300">{leadMemory.summary.pain_point}</p>
+                  </div>
+                )}
+                
+                {leadMemory.summary.objection && (
+                  <div>
+                    <span className="block text-xs text-blue-400/70 uppercase mb-1">Objection</span>
+                    <p className="text-sm text-amber-300/80">{leadMemory.summary.objection}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  {leadMemory.summary.decision_maker && (
+                    <div>
+                      <span className="block text-xs text-blue-400/70 uppercase">Decision Maker</span>
+                      <span className="text-sm text-white">{leadMemory.summary.decision_maker}</span>
+                    </div>
+                  )}
+                  {leadMemory.summary.budget && (
+                    <div>
+                      <span className="block text-xs text-blue-400/70 uppercase">Budget</span>
+                      <span className="text-sm text-white">{leadMemory.summary.budget}</span>
+                    </div>
+                  )}
+                </div>
+
+                {leadMemory.summary.preferred_communication && (
+                  <div>
+                    <span className="block text-xs text-blue-400/70 uppercase">Preferred Communication</span>
+                    <span className="text-sm text-white">{leadMemory.summary.preferred_communication}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  {leadMemory.summary.last_action && (
+                    <div>
+                      <span className="block text-xs text-blue-400/70 uppercase">Last Action</span>
+                      <span className="text-sm text-gray-300">{leadMemory.summary.last_action}</span>
+                    </div>
+                  )}
+                  {leadMemory.summary.next_action && (
+                    <div>
+                      <span className="block text-xs text-blue-400/70 uppercase">Next Action</span>
+                      <span className="text-sm text-green-300">{leadMemory.summary.next_action}</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-gray-500 text-center py-2">No intelligence data available yet. Generate a reply to build memory.</div>
+            )}
           </div>
         </div>
 

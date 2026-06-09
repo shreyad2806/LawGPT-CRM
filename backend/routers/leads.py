@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, List
 from pydantic import BaseModel
-from services.lead_service import get_all_leads as get_all_leads_service, save_lead, get_lead_by_id, update_lead
+from services.lead_service import get_all_leads as get_all_leads_service, save_lead, get_lead_by_id, update_lead, delete_lead
 from services.qualification_service import score_lead
 from services.lead_activity_service import get_lead_activities
 from services.lead_service import LEAD_COLUMNS
@@ -126,6 +126,7 @@ async def get_lead(lead_id: int) -> Dict[str, Any]:
             raise HTTPException(status_code=404, detail=f"Lead with id {lead_id} not found")
         
         print(f"Lead found: {lead.get('name', 'Unknown')}")
+        print(f"[LEAD DETAILS] Returning lead with created_at: {lead.get('created_at')}")
         return lead
     except HTTPException:
         raise
@@ -145,6 +146,21 @@ async def get_lead_activities_endpoint(lead_id: int) -> Dict[str, Any]:
     except Exception as e:
         print(f"Error in GET /api/leads/{lead_id}/activities: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch activities: {str(e)}")
+
+
+@router.delete("/{lead_id}")
+async def delete_lead_endpoint(lead_id: int) -> Dict[str, Any]:
+    """Delete a lead and all related records"""
+    try:
+        print(f"[DELETE LEAD] Backend received DELETE /api/leads/{lead_id}")
+        result = delete_lead(lead_id)
+        print(f"[DELETE LEAD] Lead {lead_id} deleted successfully")
+        return {"success": True, "deleted_id": lead_id}
+    except Exception as e:
+        print(f"[DELETE LEAD] Error in DELETE /api/leads/{lead_id}: {e}")
+        import traceback
+        print(f"[DELETE LEAD] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete lead: {str(e)}")
 
 
 @router.get("/search")

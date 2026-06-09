@@ -41,3 +41,10 @@ export async function getAnalyticsRecommendations() {
   console.log("Analytics API Response:", response.data);
   return response.data;
 }
+
+export async function getAnalyticsDashboard() {
+  console.log("Fetching from: /api/analytics/dashboard");
+  const response = await api.get("/api/analytics/dashboard");
+  console.log("Analytics Dashboard Response:", response.data);
+  return response.data;
+}

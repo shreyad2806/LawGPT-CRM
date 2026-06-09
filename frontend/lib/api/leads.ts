@@ -27,3 +27,10 @@ export async function getLeadActivities(leadId: number) {
   console.log("Response:", response.data);
   return response.data;
 }
+
+export async function deleteLead(leadId: number) {
+  console.log(`[DELETE LEAD] Deleting lead: /api/leads/${leadId}`);
+  const response = await api.delete(`/api/leads/${leadId}`);
+  console.log("[DELETE LEAD] Delete Response:", response.data);
+  return response.data;
+}

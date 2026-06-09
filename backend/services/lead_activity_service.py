@@ -8,7 +8,7 @@ def log_activity(
     lead_id: int,
     activity_type: str,
     description: str,
-    metadata: Optional[Dict[str, Any]] = None,
+    activity_data: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
 
     try:
@@ -17,14 +17,20 @@ def log_activity(
             "lead_id": lead_id,
             "activity_type": activity_type,
             "description": description,
-            "metadata": json.dumps(metadata) if metadata else None,
+            "activity_data": activity_data or {},
         }
+
+        print("LEAD ACTIVITY INSERT")
+        print(payload)
 
         response = (
             supabase.table("lead_activity")
             .insert(payload)
             .execute()
         )
+
+        print("LEAD ACTIVITY RESPONSE")
+        print(response.data)
 
         if response.data:
             return cast(Dict[str, Any], response.data[0])

@@ -4,8 +4,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { LoadingState, ErrorState } from "@/components/shared/LoadingState";
-import { getLeads, searchLeads } from "@/lib/api/leads";
+import { getLeads, searchLeads, deleteLead } from "@/lib/api/leads";
 import { LeadDetailDrawer } from "@/components/leads/LeadDetailDrawer";
+import DeleteLeadModal from "@/components/leads/DeleteLeadModal";
 
 type Lead = {
   id: string;
@@ -77,6 +78,9 @@ export default function LeadsPage() {
   const [error, setError] = useState("");
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
 
   useEffect(() => {
     async function loadLeads() {
@@ -143,6 +147,46 @@ export default function LeadsPage() {
   const handleDrawerClose = () => {
     setDrawerOpen(false);
     setSelectedLeadId(null);
+  };
+
+  const handleDeleteClick = (lead: Lead) => {
+    console.log("[DELETE LEAD] Delete button clicked for lead:", lead.id);
+    setLeadToDelete(lead);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!leadToDelete) return;
+    
+    console.log("[DELETE LEAD] Confirming deletion for lead:", leadToDelete.id);
+    console.log("[DELETE LEAD] Calling DELETE endpoint");
+    try {
+      const response = await deleteLead(parseInt(leadToDelete.id));
+      console.log("[DELETE LEAD] API response:", response);
+      
+      // Remove row immediately from UI
+      console.log("[DELETE LEAD] Removing row from UI");
+      setLeads(prev => prev.filter(x => x.id !== leadToDelete.id));
+      
+      // Show success toast
+      setToast({ message: "Lead deleted successfully", visible: true });
+      setTimeout(() => setToast({ message: "", visible: false }), 3000);
+      
+      // Close modal
+      setDeleteModalOpen(false);
+      setLeadToDelete(null);
+      
+      console.log("[DELETE LEAD] Delete flow completed successfully");
+    } catch (err) {
+      console.error("[DELETE LEAD] Error deleting lead:", err);
+      setToast({ message: "Failed to delete lead", visible: true });
+      setTimeout(() => setToast({ message: "", visible: false }), 3000);
+    }
+  };
+
+  const showToast = (message: string) => {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast({ message: "", visible: false }), 3000);
   };
 
   if (loading) {
@@ -266,6 +310,15 @@ export default function LeadsPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
                           </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(lead); }}
+                            className="p-1.5 text-gray-400 hover:text-red-400 bg-white/5 hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Delete Lead"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -282,6 +335,24 @@ export default function LeadsPage() {
         onClose={handleDrawerClose}
         leadId={selectedLeadId}
       />
+
+      <DeleteLeadModal
+        open={deleteModalOpen}
+        onClose={() => {
+          console.log("[DELETE LEAD] Modal closed");
+          setDeleteModalOpen(false);
+          setLeadToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        leadName={leadToDelete?.name}
+      />
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed bottom-4 right-4 bg-[#0A0A0F] border border-[#1F2937] rounded-lg shadow-lg px-4 py-3 z-50 animate-slide-up">
+          <p className="text-green-400 text-sm">{toast.message}</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,10 +21,17 @@ export async function generateInfographic(
   contentId: string | number
 ) {
   const response = await api.post(
-    "/api/infographic/generate",
-    {
-      content_id: contentId,
-    }
+    `/api/content/${contentId}/generate-infographic`
+  );
+
+  return response.data;
+}
+
+export async function regenerateInfographic(
+  contentId: string | number
+) {
+  const response = await api.post(
+    `/api/content/${contentId}/regenerate-infographic`
   );
 
   return response.data;

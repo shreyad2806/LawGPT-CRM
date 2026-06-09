@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card } from "@/components/ui/Card";
 import {
   BarChart,
@@ -11,59 +11,46 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { getAnalyticsTopics } from "@/lib/api/analytics";
 
-export function TopicPerformanceChart() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+interface LeadScoreDistributionProps {
+  leadScores: any[];
+}
 
-  useEffect(() => {
-    async function loadTopics() {
-      try {
-        const response = await getAnalyticsTopics();
-        console.log("TopicPerformanceChart Data:", response);
-        setData(response || []);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load topics");
-      } finally {
-        setLoading(false);
+export function TopicPerformanceChart({ leadScores }: LeadScoreDistributionProps) {
+  // Transform lead scores to new buckets: 0-25, 26-50, 51-75, 76-100
+  const transformedData = [
+    { range: "0-25", count: 0 },
+    { range: "26-50", count: 0 },
+    { range: "51-75", count: 0 },
+    { range: "76-100", count: 0 }
+  ];
+
+  if (leadScores && leadScores.length > 0) {
+    leadScores.forEach((item: any) => {
+      const range = item.range;
+      const count = item.count || 0;
+
+      if (range === "0-20") {
+        transformedData[0].count += count;
+      } else if (range === "21-40") {
+        transformedData[1].count += count;
+      } else if (range === "41-60") {
+        transformedData[2].count += count;
+      } else if (range === "61-80") {
+        transformedData[2].count += count;
+      } else if (range === "81-100") {
+        transformedData[3].count += count;
       }
-    }
-
-    loadTopics();
-  }, []);
-
-  if (loading) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-white font-semibold mb-4 text-sm">
-          Top Topics By Engagement
-        </h3>
-        <div className="text-gray-400 text-xs">Loading...</div>
-      </Card>
-    );
+    });
   }
 
-  if (error) {
+  if (!leadScores || leadScores.length === 0) {
     return (
       <Card className="p-4">
         <h3 className="text-white font-semibold mb-4 text-sm">
-          Top Topics By Engagement
+          Lead Score Distribution
         </h3>
-        <div className="text-red-400 text-xs">{error}</div>
-      </Card>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-white font-semibold mb-4 text-sm">
-          Top Topics By Engagement
-        </h3>
-        <div className="text-gray-400 text-xs">No topic data available</div>
+        <div className="text-gray-400 text-xs">No score data available</div>
       </Card>
     );
   }
@@ -71,18 +58,15 @@ export function TopicPerformanceChart() {
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">
-        Top Topics By Engagement
+        Lead Score Distribution
       </h3>
       <ResponsiveContainer width="100%" height={225}>
-        <BarChart data={data}>
+        <BarChart data={transformedData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
           <XAxis
-            dataKey="topic"
+            dataKey="range"
             stroke="#6B7280"
-            style={{ fontSize: "11px" }}
-            angle={-45}
-            textAnchor="end"
-            height={80}
+            style={{ fontSize: "12px" }}
           />
           <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} />
           <Tooltip
@@ -94,7 +78,7 @@ export function TopicPerformanceChart() {
             labelStyle={{ color: "#fff" }}
           />
           <Bar
-            dataKey="score"
+            dataKey="count"
             fill="#3B82F6"
             radius={[8, 8, 0, 0]}
           />

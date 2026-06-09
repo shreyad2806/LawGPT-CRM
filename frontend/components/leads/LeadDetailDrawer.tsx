@@ -79,7 +79,7 @@ export function LeadDetailDrawer({ open, onClose, leadId }: LeadDetailDrawerProp
   };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
+    if (!dateString) return "-";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -185,19 +185,6 @@ export function LeadDetailDrawer({ open, onClose, leadId }: LeadDetailDrawerProp
                     </ul>
                   </div>
                 )}
-                {lead.qualification_reason && lead.qualification_reason.length > 0 && (
-                  <div>
-                    <label className="text-xs text-gray-500 uppercase tracking-wide">Qualification Reason</label>
-                    <div className="mt-2 space-y-1">
-                      {lead.qualification_reason.map((reason, index) => (
-                        <div key={index} className="text-gray-300 text-sm flex items-start gap-2">
-                          <span className="text-blue-400 mt-0.5">✓</span>
-                          <span>{reason}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 {lead.confidence !== undefined && lead.confidence !== null && (
                   <div>
                     <label className="text-xs text-gray-500 uppercase tracking-wide">Confidence</label>
@@ -244,12 +231,6 @@ export function LeadDetailDrawer({ open, onClose, leadId }: LeadDetailDrawerProp
                     <div>
                       <label className="text-xs text-gray-500 uppercase tracking-wide">AI Summary</label>
                       <div className="text-white mt-1">{lead.ai_summary}</div>
-                    </div>
-                  )}
-                  {lead.reason && (
-                    <div>
-                      <label className="text-xs text-gray-500 uppercase tracking-wide">Qualification Reason</label>
-                      <div className="text-white mt-1">{lead.reason}</div>
                     </div>
                   )}
                 </div>

@@ -1,72 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Card } from "@/components/ui/Card";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 
-export function LeadGenerationChart() {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+interface IntentDistributionProps {
+  intentDistribution: any[];
+}
 
-  useEffect(() => {
-    async function loadLeadData() {
-      try {
-        // Note: Lead generation by content type endpoint not yet available in backend
-        // This component requires a new backend endpoint: GET /api/analytics/lead-generation
-        // For now, showing empty state
-        console.log("LeadGenerationChart: Backend endpoint not available");
-        setData([]);
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load lead generation data");
-      } finally {
-        setLoading(false);
-      }
-    }
+const COLORS = ["#3B82F6", "#22C55E", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899"];
 
-    loadLeadData();
-  }, []);
-
-  if (loading) {
+export function LeadGenerationChart({ intentDistribution }: IntentDistributionProps) {
+  if (!intentDistribution || intentDistribution.length === 0) {
     return (
       <Card className="p-4">
         <h3 className="text-white font-semibold mb-4 text-sm">
-          Lead Generation By Content
+          Intent Distribution
         </h3>
-        <div className="text-gray-400 text-xs">Loading...</div>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-white font-semibold mb-4 text-sm">
-          Lead Generation By Content
-        </h3>
-        <div className="text-red-400 text-xs">{error}</div>
-      </Card>
-    );
-  }
-
-  if (!data || data.length === 0) {
-    return (
-      <Card className="p-4">
-        <h3 className="text-white font-semibold mb-4 text-sm">
-          Lead Generation By Content
-        </h3>
-        <div className="text-gray-400 text-xs">
-          Lead generation data requires backend endpoint: GET /api/analytics/lead-generation
-        </div>
+        <div className="text-gray-400 text-xs">No intent data available</div>
       </Card>
     );
   }
@@ -74,17 +32,25 @@ export function LeadGenerationChart() {
   return (
     <Card className="p-4">
       <h3 className="text-white font-semibold mb-4 text-sm">
-        Lead Generation By Content
+        Intent Distribution
       </h3>
       <ResponsiveContainer width="100%" height={225}>
-        <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1F2937" />
-          <XAxis
-            dataKey="source"
-            stroke="#6B7280"
-            style={{ fontSize: "12px" }}
-          />
-          <YAxis stroke="#6B7280" style={{ fontSize: "12px" }} />
+        <PieChart>
+          <Pie
+            data={intentDistribution}
+            cx="50%"
+            cy="50%"
+            labelLine={false}
+            label
+            outerRadius={80}
+            fill="#8884d8"
+            dataKey="count"
+            nameKey="intent"
+          >
+            {intentDistribution.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
           <Tooltip
             contentStyle={{
               backgroundColor: "#111827",
@@ -93,12 +59,10 @@ export function LeadGenerationChart() {
             }}
             labelStyle={{ color: "#fff" }}
           />
-          <Bar
-            dataKey="leads"
-            fill="#22C55E"
-            radius={[8, 8, 0, 0]}
+          <Legend
+            wrapperStyle={{ color: "#9CA3AF", fontSize: "12px" }}
           />
-        </BarChart>
+        </PieChart>
       </ResponsiveContainer>
     </Card>
   );

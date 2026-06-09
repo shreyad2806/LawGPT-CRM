@@ -25,20 +25,11 @@ export function Select({ value, onChange, options, disabled = false, loading = f
   const [menuStyle, setMenuStyle] = useState<{ top: number; left: number; transformOrigin?: string } | null>(null);
 
   const handleSelect = (optionValue: string) => {
-    // Debug: log selection
-    // eslint-disable-next-line no-console
-    console.log("Select handleSelect called with:", optionValue);
-    console.log("Calling onChange with:", optionValue);
     onChange(optionValue);
-    console.log("onChange called, setting isOpen to false");
     setIsOpen(false);
   };
 
   const selectedOption = options.find(opt => opt.value.toLowerCase() === (value || "").toLowerCase());
-
-  // Debug: log selected option
-  // eslint-disable-next-line no-console
-  console.log("Select - value prop:", value, "selectedOption:", selectedOption);
 
   useEffect(() => {
   const handleClickOutside = (event: MouseEvent) => {
@@ -62,11 +53,6 @@ export function Select({ value, onChange, options, disabled = false, loading = f
     );
 }, []);
 
-  useEffect(() => {
-    // Debug: log incoming value changes
-    // eslint-disable-next-line no-console
-    console.log("Select value prop changed:", value);
-  }, [value]);
 
   // Position the portal menu relative to the trigger
   useEffect(() => {
@@ -166,11 +152,7 @@ export function Select({ value, onChange, options, disabled = false, loading = f
     onClick={(e) => {
       e.stopPropagation();
       e.preventDefault();
-      // eslint-disable-next-line no-console
-      console.log("click:", option.value, "event:", e);
-      console.log("Before handleSelect, current value:", value);
       handleSelect(option.value);
-      console.log("After handleSelect");
     }}
 
       className={`w-full text-left px-3 py-2 text-sm transition-all ${

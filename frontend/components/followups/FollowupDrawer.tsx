@@ -84,9 +84,7 @@ export function FollowupDrawer({ followup, isOpen, onClose, onRefresh }: Followu
         setIsGenerating(true);
 
         const res = await generateReply(followup.id);
-        console.log("Generate Reply Response:", res);
         if (!res?.followup) {
-          console.error("Invalid response:", res);
           return;
         }
         setEditedMessage(

@@ -5,9 +5,6 @@
 -- This schema recreates the entire project from scratch
 -- Includes all tables, indexes, constraints, foreign keys, and triggers
 -- =========================================================
--- NOTE: Incremental migrations have been archived to database/migrations/archive/
--- Use this schema for fresh installations or to recreate the database
--- =========================================================
 
 -- =========================================================
 -- ENUM TYPES

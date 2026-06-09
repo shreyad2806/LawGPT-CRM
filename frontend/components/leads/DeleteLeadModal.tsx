@@ -43,7 +43,6 @@ export default function DeleteLeadModal({
             variant="secondary"
             size="md"
             onClick={() => {
-              console.log("[DELETE LEAD] Cancel clicked");
               onClose();
             }}
           >
@@ -53,7 +52,6 @@ export default function DeleteLeadModal({
             variant="primary"
             size="md"
             onClick={() => {
-              console.log("[DELETE LEAD] Delete confirmed");
               onConfirm();
             }}
           >

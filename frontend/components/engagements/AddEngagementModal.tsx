@@ -31,20 +31,11 @@ export function AddEngagementModal({ open, onClose, onSaved }: AddEngagementModa
     { value: "Other", label: "Other" },
   ];
 
-  // Debug: log source state changes
-  React.useEffect(() => {
-    console.log("Source state:", source);
-  }, [source]);
-
   const handleSourceChange = (value: string) => {
-    console.log("Selected source:", value);
     setSource(value);
   };
 
   const handleSave = async () => {
-    // Debug: log current source before save
-    console.log("Saving with source:", source);
-    
     // Validation: At least one of Message or Screenshot must exist
     if (!message.trim() && !screenshot) {
       alert("Please provide a message or upload a screenshot");
@@ -70,9 +61,7 @@ export function AddEngagementModal({ open, onClose, onSaved }: AddEngagementModa
         data.screenshot_data = base64;
       }
 
-      console.log("Saving engagement:", data);
       const result = await createEngagementLog(data);
-      console.log("Save result:", result);
       
       // Show success toast
       if (result && result.lead) {

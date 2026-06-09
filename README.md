@@ -155,12 +155,6 @@ for improved sales operations.
 
 ---
 
-## 🏛️ Architecture Overview
-
-![Workflow](archi.png)
-
----
-
 ## 🛠️ Tech Stack
 
 ### Frontend

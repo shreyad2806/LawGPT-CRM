@@ -10,7 +10,8 @@ An AI-powered CRM and Marketing Automation platform that streamlines **content g
 
 ---
 
-![Workflow](archi.png)
+<img width="1229" height="626" alt="Screenshot 2026-06-09 231324" src="https://github.com/user-attachments/assets/417aa5a8-8c8b-49b6-9172-40eeeddccfa6" />
+
 
 ---
 

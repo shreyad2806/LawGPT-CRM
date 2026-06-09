@@ -7,6 +7,9 @@ An AI-powered CRM and Marketing Automation platform that streamlines **content g
 ## 🏗️ System Architecture
 
 ![Architecture](image.png)
+
+---
+
 ![Workflow](archi.png)
 
 ---

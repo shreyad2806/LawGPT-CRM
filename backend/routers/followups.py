@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, List
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime
+from datetime import date, datetime
 from services.followup_service import get_followups, get_followup, save_followup, update_followup, delete_followup
 from services.followup_ai_service import generate_ai_reply, generate_ai_recommendation, generate_coaching_panel
 from services.sdr_memory_service import learn_successful_pattern
@@ -12,11 +12,11 @@ from services.memory_service import (
     store_conversation,
     extract_memory,
     update_lead_memory_summary,
-    store_memory_event
+    store_memory_event,
 )
 from services.lead_activity_service import (
-    log_followup_status_updated,
-    log_reply_generated,
+    log_followup_status_updated, 
+    log_reply_generated, 
     log_recommendation_generated,
     log_followup_completed
 )
@@ -260,30 +260,19 @@ Generate the best SDR response.
     print("========== GENERATED REPLY ==========")
     print(generated_reply)
 
-    print("========== BEFORE MEMORY SAVE ==========")
-    print("lead_id:", followup["lead_id"])
-    print("engagement_message:", engagement_message)
-    print("generated_reply:", generated_reply[:100])
-
     # Store user message
-    user_result = store_conversation(
+    store_conversation(
         followup["lead_id"],
         "user",
         engagement_message
     )
 
-    print("USER RESULT")
-    print(user_result)
-
     # Store assistant reply
-    assistant_result = store_conversation(
+    store_conversation(
         followup["lead_id"],
         "assistant",
         generated_reply
     )
-
-    print("ASSISTANT RESULT")
-    print(assistant_result)
 
     # Update memory summary
     conversation_text = history_text + "\n" + generated_reply
@@ -339,7 +328,7 @@ async def complete_followup(id:int):
 
         raise HTTPException(404,"Followup not found")
 
-    now=datetime.utcnow().isoformat()
+    now=date.today().isoformat()
 
     payload = {
 

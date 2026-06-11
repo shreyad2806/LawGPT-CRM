@@ -4,6 +4,14 @@ An AI-powered CRM and Marketing Automation platform that streamlines **content g
 
 ---
 
+# 🎥 Demo
+
+[![Watch Demo](demo.gif)](https://drive.google.com/file/d/1acbmSmgs7imgop4hUUwtWfxHHeS2ARtW/view?usp=sharing)
+
+▶️ **Click the GIF above to watch the full demo.**
+
+---
+
 ## 🏗️ System Architecture
 
 ![Architecture](image.png)

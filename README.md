@@ -4,11 +4,9 @@ An AI-powered CRM and Marketing Automation platform that streamlines **content g
 
 ---
 
-# 🎥 Demo
+## 🎥 Demo Video
 
-[![Watch Demo](demo.gif)](https://drive.google.com/file/d/1acbmSmgs7imgop4hUUwtWfxHHeS2ARtW/view?usp=sharing)
-
-▶️ **Click the GIF above to watch the full demo.**
+[![Watch Demo](https://img.shields.io/badge/▶️%20Watch%20Demo-Google%20Drive-blue?style=for-the-badge)](https://drive.google.com/file/d/1acbmSmgs7imgop4hUUwtWfxHHeS2ARtW/view?usp=sharing)
 
 ---
 

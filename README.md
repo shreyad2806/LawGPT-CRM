@@ -1,4 +1,4 @@
-# 🚀 LawGPT CRM & Marketing Automation System
+# CRM & Marketing Automation System
 
 An AI-powered CRM and Marketing Automation platform that streamlines **content generation, lead management, intelligent follow-ups, and analytics** using **OpenAI, FastAPI, Next.js, Supabase, and persistent memory systems**.
 
